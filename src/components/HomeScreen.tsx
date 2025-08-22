@@ -50,16 +50,19 @@ export function HomeScreen({ pastGames, onStartNewGame, onViewPastGame }: HomeSc
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Start New Game - Centered */}
-        <div className="flex-1 flex items-center justify-center p-6 ">
-          <Card className="p-12 border-2 border-dashed border-green-500/30 rounded-xl bg-gradient-to-br from-green-500/5 to-green-500/10 hover:from-green-500/10 hover:to-green-500/15 transition-all duration-200 cursor-pointer max-w-md w-full" onClick={onStartNewGame}>
-            <div className="text-center space-y-6">
-              <div className="w-20 h-20 mx-auto bg-green-500/10 rounded-full flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center p-6">
+          <Card 
+            className="p-12 border border-border/50 shadow-sm rounded-xl cursor-pointer hover:bg-muted/20 transition-colors max-w-md w-full" 
+            onClick={onStartNewGame}
+          >
+            <div className="flex items-center h-full px-6 py-4">
+              <div className="flex-1 space-y-2 pr-6">
+                <h2 className="text-2xl font-semibold text-foreground">Start New Game</h2>
+                <p className="text-base text-muted-foreground">Create a new poker night and track your game</p>
+              </div>
+              <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center flex-shrink-0">
                 <Plus className="w-10 h-10 text-green-600" />
-                <div>
-                <h2 className="text-2xl font-semibold text-foreground mb-3"> Start New Game</h2>
               </div>
-              </div>
-              <p className="text-base text-muted-foreground">Create a new poker night and track your game</p>
             </div>
           </Card>
         </div>
