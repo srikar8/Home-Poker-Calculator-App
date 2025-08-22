@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Input } from './ui/input';
-import { ArrowLeft, Plus, DollarSign, TrendingUp, Clock, User } from 'lucide-react';
+import { ArrowLeft, Plus, DollarSign, TrendingUp, Clock, User, ChevronDown, ChevronRight, Users } from 'lucide-react';
 import { Game, Player, RebuyTransaction } from '../App';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import {
@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
 interface GameInProgressProps {
   game: Game;
@@ -25,6 +26,10 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame }: GameIn
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>('');
   const [rebuyAmount, setRebuyAmount] = useState('50');
   const [isRebuyDialogOpen, setIsRebuyDialogOpen] = useState(false);
+  const [isPlayersListOpen, setIsPlayersListOpen] = useState(false);
+  const [isRebuyHistoryOpen, setIsRebuyHistoryOpen] = useState(true);
+  const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
+  const [newPlayerName, setNewPlayerName] = useState('');
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -64,6 +69,27 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame }: GameIn
     }
   };
 
+  const addNewPlayer = () => {
+    if (newPlayerName.trim()) {
+      const newPlayer = {
+        id: Date.now().toString(),
+        name: newPlayerName.trim(),
+        buyIn: game.buyInAmount - game.hostFee, // Buy-in minus host fee (amount that goes to pot)
+        rebuys: 0,
+        cashOut: 0
+      };
+
+      const updatedGame = {
+        ...game,
+        players: [...game.players, newPlayer]
+      };
+      
+      onUpdateGame(updatedGame);
+      setNewPlayerName('');
+      setIsAddPlayerDialogOpen(false);
+    }
+  };
+
   const getTotalInvested = (player: Player) => {
     return player.buyIn + player.rebuys;
   };
@@ -76,10 +102,39 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame }: GameIn
     return game.hostFee * game.players.length;
   };
 
+  const getTotalBoardAmount = () => {
+    return game.players.reduce((total, player) => {
+      return total + player.buyIn + player.rebuys;
+    }, 0);
+  };
+
+  // Calculate header and bottom heights for proper spacing
+  useEffect(() => {
+    const updateSpacing = () => {
+      const header = document.getElementById('header') as HTMLElement;
+      const bottomButton = document.getElementById('bottom-button') as HTMLElement;
+      
+      if (header) {
+        const headerHeight = header.offsetHeight;
+        document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+      }
+      
+      if (bottomButton) {
+        const bottomHeight = bottomButton.offsetHeight;
+        document.documentElement.style.setProperty('--bottom-height', `${bottomHeight}px`);
+      }
+    };
+
+    updateSpacing();
+    window.addEventListener('resize', updateSpacing);
+    
+    return () => window.removeEventListener('resize', updateSpacing);
+  }, []);
+
   return (
-    <div className="flex flex-col h-screen">
-      {/* Header */}
-      <div className="p-4 bg-background border-b border-border/50">
+    <div className="h-screen flex flex-col">
+      {/* Header - Fixed to screen top */}
+      <div className="fixed top-0 left-0 right-0 p-4 bg-background border-b border-border/50 z-10" id="header">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -156,69 +211,188 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame }: GameIn
         </div>
       </div>
 
-      {/* Players List */}
-      <div className="flex-1 p-6 space-y-4 overflow-y-auto">
-        <div className="space-y-4">
-          {game.players.map((player) => (
-            <Card key={player.id} className="p-4 border border-border/50 rounded-xl">
-              <div className="flex items-center gap-3">
-                <Avatar className="w-10 h-10">
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                    {getInitials(player.name)}
-                  </AvatarFallback>
-                </Avatar>
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto" style={{ paddingTop: 'var(--header-height, 80px)', paddingBottom: 'var(--bottom-height, 80px)' }}>
+        <div className="p-6 space-y-4">
+          {/* Total Stakes */}
+          <Card className="p-4 border border-border/50 rounded-xl bg-muted/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Total Stakes</p>
+                  <p className="text-xs text-muted-foreground">All buy-ins and rebuys</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-bold text-foreground">${getTotalBoardAmount()}</p>
+                <p className="text-xs text-muted-foreground">
+                  {game.players.length} player{game.players.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Add New Player */}
+          <Dialog open={isAddPlayerDialogOpen} onOpenChange={setIsAddPlayerDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline"
+                className="w-full h-12 text-base rounded-xl border-dashed border-2 hover:border-primary/50 hover:bg-primary/5"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add New Player
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-sm rounded-xl">
+              <DialogHeader>
+                <DialogTitle>Add New Player</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Player Name</label>
+                  <Input
+                    placeholder="Enter player name"
+                    value={newPlayerName}
+                    onChange={(e) => setNewPlayerName(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addNewPlayer()}
+                    className="rounded-lg"
+                  />
+                </div>
                 
-                <div className="flex-1">
-                  <h3 className="text-sm font-medium">{player.name}</h3>
-                  <div className="flex flex-col gap-1 mt-1">
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>Buy-in: ${player.buyIn}</span>
-                      <span>Rebuys: ${player.rebuys}</span>
-                    </div>
-                    <div className="text-sm font-medium text-foreground">
-                      Total: ${getTotalInvested(player)}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Payment Breakdown</label>
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-medium">${game.buyInAmount}</p>
+                        <p className="text-xs text-muted-foreground">Total amount to pay</p>
+                      </div>
+                      <div className="text-right text-xs text-muted-foreground">
+                        <p>To pot: ${game.buyInAmount - game.hostFee}</p>
+                        <p>Host fee: ${game.hostFee}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
+                
+                <Button
+                  onClick={addNewPlayer}
+                  disabled={!newPlayerName.trim()}
+                  className="w-full rounded-lg"
+                >
+                  Add Player
+                </Button>
               </div>
-            </Card>
-          ))}
-        </div>
+            </DialogContent>
+          </Dialog>
 
-        {/* Rebuy History */}
-        {game.rebuyHistory.length > 0 && (
-          <div className="space-y-4 mt-8">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <h2 className="text-sm font-medium">Rebuy History</h2>
-            </div>
-            
-            <div className="space-y-2">
-              {game.rebuyHistory.slice().reverse().map((rebuy) => (
-                <Card key={rebuy.id} className="p-3 border border-border/30 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <User className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-sm font-medium">{rebuy.playerName}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-green-600">
-                        +${rebuy.amount}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {rebuy.timestamp}
-                      </span>
+          {/* Players List - Collapsible */}
+          <Collapsible open={isPlayersListOpen} onOpenChange={setIsPlayersListOpen}>
+            <CollapsibleTrigger asChild>
+              <Card className="p-4 border border-border/50 rounded-xl hover:bg-muted/20 cursor-pointer transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-5 h-5 text-muted-foreground" />
+                    <div>
+                      <h3 className="text-sm font-medium">Players</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {game.players.length} player{game.players.length !== 1 ? 's' : ''} • Total: ${getTotalBoardAmount()}
+                      </p>
                     </div>
                   </div>
+                  {isPlayersListOpen ? (
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </div>
+              </Card>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent>
+              <div className="space-y-3 mt-3">
+                {game.players.map((player) => (
+                  <Card key={player.id} className="p-4 border border-border/50 rounded-xl">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10">
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                          {getInitials(player.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      <div className="flex-1">
+                        <h3 className="text-sm font-medium">{player.name}</h3>
+                        <div className="flex flex-col gap-1 mt-1">
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>Buy-in: ${player.buyIn}</span>
+                            <span>Rebuys: ${player.rebuys}</span>
+                          </div>
+                          <div className="text-sm font-medium text-foreground">
+                            Total: ${getTotalInvested(player)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Rebuy History - Collapsible */}
+          {game.rebuyHistory.length > 0 && (
+            <Collapsible open={isRebuyHistoryOpen} onOpenChange={setIsRebuyHistoryOpen}>
+              <CollapsibleTrigger asChild>
+                <Card className="p-4 border border-border/50 rounded-xl hover:bg-muted/20 cursor-pointer transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Clock className="w-5 h-5 text-muted-foreground" />
+                      <div>
+                        <h3 className="text-sm font-medium">Rebuy History</h3>
+                        <p className="text-xs text-muted-foreground">
+                          {game.rebuyHistory.length} rebuy{game.rebuyHistory.length !== 1 ? 's' : ''} • Total: ${game.rebuyHistory.reduce((sum, rebuy) => sum + rebuy.amount, 0)}
+                        </p>
+                      </div>
+                    </div>
+                    {isRebuyHistoryOpen ? (
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </div>
                 </Card>
-              ))}
-            </div>
-          </div>
-        )}
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent>
+                <div className="space-y-2 mt-3">
+                  {game.rebuyHistory.slice().reverse().map((rebuy) => (
+                    <Card key={rebuy.id} className="p-3 border border-border/30 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <User className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-sm font-medium">{rebuy.playerName}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-green-600">
+                            +${rebuy.amount}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {rebuy.timestamp}
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+        </div>
       </div>
 
-      {/* Bottom Action */}
-      <div className="p-6 border-t border-border/50">
+      {/* Bottom Action - Fixed to screen bottom */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 border-t border-border/50 bg-background z-10" id="bottom-button">
         <Button
           onClick={onEndGame}
           className="w-full h-12 text-base rounded-xl bg-green-600 hover:bg-green-700"

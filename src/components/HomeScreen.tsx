@@ -39,26 +39,33 @@ export function HomeScreen({ pastGames, onStartNewGame, onViewPastGame }: HomeSc
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="h-screen flex flex-col">
       {/* Header */}
       <div className="p-6 pb-4 bg-background border-b border-border/50">
-        <h1 className="text-2xl font-medium text-foreground">Home Poker Calculator</h1>
+        <h1 className="text-4xl font-medium text-foreground" style={{ fontSize: '4rem' }}>Pre FLOP</h1>
+        <h1 className="text-4xl font-medium text-foreground" style={{ fontSize: '3rem' }}>ALL IN</h1>
         <p className="text-sm text-muted-foreground mt-1">Manage your poker nights</p>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-6 space-y-6">
-        {/* Start New Game Button */}
-        <Button 
-          onClick={onStartNewGame}
-          className="w-full h-14 text-base bg-primary hover:bg-primary/90 rounded-xl shadow-sm"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Start New Game
-        </Button>
+      <div className="flex-1 flex flex-col">
+        {/* Start New Game - Centered */}
+        <div className="flex-1 flex items-center justify-center p-6 ">
+          <Card className="p-12 border-2 border-dashed border-green-500/30 rounded-xl bg-gradient-to-br from-green-500/5 to-green-500/10 hover:from-green-500/10 hover:to-green-500/15 transition-all duration-200 cursor-pointer max-w-md w-full" onClick={onStartNewGame}>
+            <div className="text-center space-y-6">
+              <div className="w-20 h-20 mx-auto bg-green-500/10 rounded-full flex items-center justify-center">
+                <Plus className="w-10 h-10 text-green-600" />
+                <div>
+                <h2 className="text-2xl font-semibold text-foreground mb-3"> Start New Game</h2>
+              </div>
+              </div>
+              <p className="text-base text-muted-foreground">Create a new poker night and track your game</p>
+            </div>
+          </Card>
+        </div>
 
         {/* Past Games Section */}
-        <div className="space-y-4">
+        <div className="p-6 space-y-4">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-muted-foreground" />
             <h2 className="text-lg font-medium text-foreground">Recent Games</h2>

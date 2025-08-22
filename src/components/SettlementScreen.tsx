@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
@@ -152,10 +152,33 @@ export function SettlementScreen({ game, onBack, onFinishGame }: SettlementScree
     }
   };
 
+  // Calculate header and bottom heights for proper spacing
+  useEffect(() => {
+    const updateSpacing = () => {
+      const header = document.getElementById('header') as HTMLElement;
+      const bottomButton = document.getElementById('bottom-button') as HTMLElement;
+      
+      if (header) {
+        const headerHeight = header.offsetHeight;
+        document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+      }
+      
+      if (bottomButton) {
+        const bottomHeight = bottomButton.offsetHeight;
+        document.documentElement.style.setProperty('--bottom-height', `${bottomHeight}px`);
+      }
+    };
+
+    updateSpacing();
+    window.addEventListener('resize', updateSpacing);
+    
+    return () => window.removeEventListener('resize', updateSpacing);
+  }, []);
+
   return (
-    <div className="flex flex-col h-screen">
-      {/* Header */}
-      <div className="p-4 bg-background border-b border-border/50">
+    <div className="h-screen flex flex-col">
+      {/* Header - Fixed to screen top */}
+      <div className="fixed top-0 left-0 right-0 p-4 bg-background border-b border-border/50 z-10" id="header">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
@@ -182,83 +205,84 @@ export function SettlementScreen({ game, onBack, onFinishGame }: SettlementScree
         </div>
       </div>
 
-      {/* Toggle */}
-      <div className="p-6 pb-4">
-        <Card className="p-4 border border-border/50 rounded-xl">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label htmlFor="simplified-mode" className="text-sm font-medium">
-                Simplified Debts
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                {showSimplified 
-                  ? `Minimized to ${simplifiedTransactions.length} transactions`
-                  : `All individual debts (${fullTransactions.length} transactions)`
-                }
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <RefreshCw className="w-4 h-4 text-muted-foreground" />
-              <Switch
-                id="simplified-mode"
-                checked={showSimplified}
-                onCheckedChange={setShowSimplified}
-              />
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Transactions */}
-      <div className="flex-1 px-6 space-y-3">
-        {transactions.length > 0 ? (
-          transactions.map((transaction, index) => (
-            <Card key={index} className="p-4 border border-border/50 rounded-xl">
-              <div className="flex items-center gap-4">
-                {/* From Player */}
-                <div className="flex items-center gap-2">
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className="bg-red-100 text-red-700 text-xs dark:bg-red-950 dark:text-red-300">
-                      {getInitials(transaction.from.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium">{transaction.from.name}</span>
-                </div>
-
-                {/* Arrow and Amount */}
-                <div className="flex-1 flex items-center justify-center gap-2">
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                  <Badge variant="outline" className="text-sm font-medium px-3 py-1">
-                    ${transaction.amount.toFixed(2)}
-                  </Badge>
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                </div>
-
-                {/* To Player */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{transaction.to.name}</span>
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className="bg-green-100 text-green-700 text-xs dark:bg-green-950 dark:text-green-300">
-                      {getInitials(transaction.to.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto" style={{ paddingTop: 'var(--header-height, 80px)', paddingBottom: 'var(--bottom-height, 80px)' }}>
+        <div className="p-6 space-y-4">
+          {/* Toggle */}
+          <Card className="p-4 border border-border/50 rounded-xl">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label htmlFor="simplified-mode" className="text-sm font-medium">
+                  Simplified Debts
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {showSimplified 
+                    ? `Minimized to ${simplifiedTransactions.length} transactions`
+                    : `All individual debts (${fullTransactions.length} transactions)`
+                  }
+                </p>
               </div>
-            </Card>
-          ))
-        ) : (
-          <Card className="p-8 text-center border border-border/50 rounded-xl">
-            <CheckCircle className="w-12 h-12 mx-auto text-green-600 mb-4" />
-            <p className="text-lg font-medium">All Settled!</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              No money needs to change hands
-            </p>
+              <div className="flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-muted-foreground" />
+                <Switch
+                  id="simplified-mode"
+                  checked={showSimplified}
+                  onCheckedChange={setShowSimplified}
+                />
+              </div>
+            </div>
           </Card>
-        )}
+
+          {/* Transactions */}
+          {transactions.length > 0 ? (
+            transactions.map((transaction, index) => (
+              <Card key={index} className="p-4 border border-border/50 rounded-xl">
+                <div className="flex items-center gap-4">
+                  {/* From Player */}
+                  <div className="flex items-center gap-2">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="bg-red-100 text-red-700 text-xs dark:bg-red-950 dark:text-red-300">
+                        {getInitials(transaction.from.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">{transaction.from.name}</span>
+                  </div>
+
+                  {/* Arrow and Amount */}
+                  <div className="flex-1 flex items-center justify-center gap-2">
+                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    <Badge variant="outline" className="text-sm font-medium px-3 py-1">
+                      ${transaction.amount.toFixed(2)}
+                    </Badge>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+
+                  {/* To Player */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{transaction.to.name}</span>
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="bg-green-100 text-green-700 text-xs dark:bg-green-950 dark:text-green-300">
+                        {getInitials(transaction.to.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                </div>
+              </Card>
+            ))
+          ) : (
+            <Card className="p-8 text-center border border-border/50 rounded-xl">
+              <CheckCircle className="w-12 h-12 mx-auto text-green-600 mb-4" />
+              <p className="text-lg font-medium">All Settled!</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                No money needs to change hands
+              </p>
+            </Card>
+          )}
+        </div>
       </div>
 
-      {/* Bottom Actions */}
-      <div className="p-6 border-t border-border/50 space-y-3">
+      {/* Bottom Actions - Fixed to screen bottom */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 border-t border-border/50 bg-background z-10 space-y-3" id="bottom-button">
         {transactions.length > 0 && (
           <div className="text-center">
             <p className="text-xs text-muted-foreground">
