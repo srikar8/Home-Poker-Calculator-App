@@ -1,0 +1,110 @@
+import React from 'react';
+import { Button } from './ui/button';
+import { Card } from './ui/card';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { Badge } from './ui/badge';
+import { Plus, Clock, DollarSign, Users, Calendar, ArrowRight, Trophy } from 'lucide-react';
+import { Game } from '../App';
+
+interface HomeScreenProps {
+  pastGames: Game[];
+  onStartNewGame: () => void;
+  onViewPastGame: (game: Game) => void;
+}
+
+export function HomeScreen({ pastGames, onStartNewGame, onViewPastGame }: HomeScreenProps) {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric' 
+    });
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const getBiggestWinner = (game: Game) => {
+    const getNetResult = (player: any) => {
+      return player.cashOut - (game.buyInAmount + player.rebuys);
+    };
+    
+    return game.players.reduce((biggest, player) => {
+      const currentNet = getNetResult(player);
+      const biggestNet = getNetResult(biggest);
+      return currentNet > biggestNet ? player : biggest;
+    });
+  };
+
+  return (
+    <div className="flex flex-col h-screen">
+      {/* Header */}
+      <div className="p-6 pb-4 bg-background border-b border-border/50">
+        <h1 className="text-2xl font-medium text-foreground">Home Poker Calculator</h1>
+        <p className="text-sm text-muted-foreground mt-1">Manage your poker nights</p>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 p-6 space-y-6">
+        {/* Start New Game Button */}
+        <Button 
+          onClick={onStartNewGame}
+          className="w-full h-14 text-base bg-primary hover:bg-primary/90 rounded-xl shadow-sm"
+        >
+          <Plus className="w-5 h-5 mr-2" />
+          Start New Game
+        </Button>
+
+        {/* Past Games Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-muted-foreground" />
+            <h2 className="text-lg font-medium text-foreground">Recent Games</h2>
+          </div>
+          
+          {pastGames.length > 0 ? (
+            <div className="space-y-3">
+              {pastGames.map((game) => (
+                <Card 
+                  key={game.id} 
+                  className="p-4 border border-border/50 shadow-sm rounded-xl cursor-pointer hover:bg-muted/20 transition-colors"
+                  onClick={() => onViewPastGame(game)}
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">
+                        {formatDate(game.date)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {game.players.length} players
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-sm font-medium text-foreground">
+                          ${game.totalPot}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Total Pot</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="p-8 text-center border border-border/50 rounded-xl">
+              <div className="text-muted-foreground">
+                <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No games yet</p>
+                <p className="text-xs mt-1">Start your first poker night!</p>
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
