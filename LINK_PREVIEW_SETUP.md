@@ -66,17 +66,17 @@ You need to create these icon files in the `public/` directory:
    - [Favicon.io](https://favicon.io)
    - [RealFaviconGenerator](https://realfavicongenerator.net)
 
-### 3. Update URLs in index.html
+### 3. Update URLs in index.html ✅
 
-Replace these placeholder URLs in `index.html`:
+Your URLs have been updated with your domain `www.pokerprocalculator.online`:
 
 ```html
-<!-- Replace these with your actual domain -->
-<meta property="og:url" content="https://your-domain.com/" />
-<meta property="twitter:url" content="https://your-domain.com/" />
-<meta property="og:image" content="https://your-domain.com/og-image.png" />
-<meta property="twitter:image" content="https://your-domain.com/og-image.png" />
-<meta property="twitter:creator" content="@yourtwitterhandle" />
+<!-- Your actual domain URLs -->
+<meta property="og:url" content="https://www.pokerprocalculator.online/" />
+<meta property="twitter:url" content="https://www.pokerprocalculator.online/" />
+<meta property="og:image" content="https://www.pokerprocalculator.online/og-image.png" />
+<meta property="twitter:image" content="https://www.pokerprocalculator.online/og-image.png" />
+<meta property="twitter:creator" content="@pokerprocalc" />
 ```
 
 ### 4. Test Your Link Preview
