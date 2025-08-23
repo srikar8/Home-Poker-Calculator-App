@@ -95,6 +95,9 @@ export default function App() {
   const navigateToScreen = (screen: Screen, game?: Game) => {
     setCurrentScreen(screen);
     if (game) setCurrentGame(game);
+    
+    // Scroll to top when navigating to a new screen
+    window.scrollTo(0, 0);
   };
 
   const createNewGame = (players: Omit<Player, 'buyIn' | 'rebuys' | 'cashOut'>[], buyInAmount: number, hostFee: number, hostId: string) => {
