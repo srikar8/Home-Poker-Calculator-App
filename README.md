@@ -88,18 +88,7 @@ src/
 - Accessible design principles
 - Dark/light theme support
 
-## 📊 Visitor Analytics
 
-The app includes a built-in visitor tracking system that:
-
-- **Tracks Total Visitors**: Counts unique visitors using localStorage
-- **Daily Statistics**: Shows how many visitors used the app today
-- **Session Management**: Prevents duplicate counting within the same browser session
-- **Visual Indicators**: Displays badges for new visitors and first-time daily visitors
-- **Detailed Stats**: Access comprehensive visitor statistics through the "View Stats" button
-- **Reset Functionality**: Option to reset visitor data if needed
-
-The visitor count is displayed prominently on the home screen and updates automatically when new users visit the app.
 
 ## 🤝 Contributing
 
