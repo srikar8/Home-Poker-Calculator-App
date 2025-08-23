@@ -74,9 +74,9 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
     return game.hostFee * game.players.length;
   };
 
-  const getTotalCashOut = () => {
-    return Object.values(cashOutValues).reduce((sum, value) => {
-      const amount = parseFloat(value) || 0;
+  const getTotalCashOut = (): number => {
+    return Object.values(cashOutValues).reduce((sum: number, value: unknown) => {
+      const amount = parseFloat(String(value)) || 0;
       return sum + amount;
     }, 0);
   };

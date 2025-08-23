@@ -3,8 +3,11 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
-import { Plus, Clock, DollarSign, Users, Calendar, ArrowRight, Trophy } from 'lucide-react';
+import { Plus, Clock, DollarSign, Users, Calendar, ArrowRight, Trophy, Eye } from 'lucide-react';
 import { Game } from '../App';
+import { useVisitorCount } from '../hooks/useVisitorCount';
+import { VisitorStats } from './VisitorStats';
+import { VisitorStatsDialog } from './VisitorStatsDialog';
 
 interface HomeScreenProps {
   pastGames: Game[];
@@ -13,6 +16,8 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ pastGames, onStartNewGame, onViewPastGame }: HomeScreenProps) {
+  const { visitorCount, isNewVisitor } = useVisitorCount();
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -41,9 +46,22 @@ export function HomeScreen({ pastGames, onStartNewGame, onViewPastGame }: HomeSc
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <div class="p-6 pb-4 bg-background border-b border-border/50">
-        <h1 className="text-4xl font-medium text-foreground" style={{ fontSize: '3rem', paddingTop: '20vh' }}>Pre Flop ALL IN</h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage your poker nights</p>
+      <div className="p-6 pb-4 bg-background border-b border-border/50">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-medium text-foreground" style={{ fontSize: '3rem', paddingTop: '20vh' }}>Pre Flop ALL IN</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage your poker nights</p>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Eye className="w-4 h-4" />
+            <span>{visitorCount.toLocaleString()}</span>
+            {isNewVisitor && (
+              <Badge variant="secondary" className="text-xs">
+                New!
+              </Badge>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -64,6 +82,14 @@ export function HomeScreen({ pastGames, onStartNewGame, onViewPastGame }: HomeSc
               </div>
             </div>
           </Card>
+        </div>
+
+        {/* Visitor Stats */}
+        <div className="px-6 space-y-3">
+          <VisitorStats />
+          <div className="flex justify-center">
+            <VisitorStatsDialog />
+          </div>
         </div>
 
         {/* Past Games Section */}

@@ -9,6 +9,7 @@ A modern, responsive web application designed to help poker players track their 
 - **Cash Out Management**: Handle player cash-outs during the game
 - **Settlement Calculator**: Automatically calculate final settlements for all players
 - **Game History**: View and manage past game sessions
+- **Visitor Analytics**: Track app usage with visitor count and daily statistics
 - **Responsive Design**: Works seamlessly on desktop and mobile devices
 
 ## 🚀 Getting Started
@@ -86,6 +87,19 @@ src/
 - Smooth animations and transitions
 - Accessible design principles
 - Dark/light theme support
+
+## 📊 Visitor Analytics
+
+The app includes a built-in visitor tracking system that:
+
+- **Tracks Total Visitors**: Counts unique visitors using localStorage
+- **Daily Statistics**: Shows how many visitors used the app today
+- **Session Management**: Prevents duplicate counting within the same browser session
+- **Visual Indicators**: Displays badges for new visitors and first-time daily visitors
+- **Detailed Stats**: Access comprehensive visitor statistics through the "View Stats" button
+- **Reset Functionality**: Option to reset visitor data if needed
+
+The visitor count is displayed prominently on the home screen and updates automatically when new users visit the app.
 
 ## 🤝 Contributing
 
