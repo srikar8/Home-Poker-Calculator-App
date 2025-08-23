@@ -158,6 +158,7 @@ export function GameSummary({ game, onBack, onSimplifyDebts }: GameSummaryProps)
             const netResult = getNetResult(player);
             const isProfit = netResult > 0;
             const totalInvested = getTotalInvested(player);
+            const isHost = game.players[0].id === player.id; // Check if this player is the host (first player in original game)
             
             return (
               <Card key={player.id} className="p-4 border border-border/50 rounded-xl">
@@ -176,7 +177,14 @@ export function GameSummary({ game, onBack, onSimplifyDebts }: GameSummaryProps)
                   </div>
                   
                   <div className="flex-1">
-                    <h3 className="text-sm font-medium">{player.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-medium">{player.name}</h3>
+                      {isHost && (
+                        <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800/30">
+                          Host
+                        </Badge>
+                      )}
+                    </div>
                     <div className="flex items-center gap-3 mt-1">
                       <span className="text-xs text-muted-foreground">
                         In: ${totalInvested}

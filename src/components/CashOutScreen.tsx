@@ -5,6 +5,13 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { Input } from './ui/input';
 import { ArrowLeft, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 import { Game, Player } from '../App';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './ui/dialog';
 
 interface CashOutScreenProps {
   game: Game;
@@ -15,15 +22,37 @@ interface CashOutScreenProps {
 
 export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: CashOutScreenProps) {
   const [cashOutValues, setCashOutValues] = useState<{ [playerId: string]: string }>({});
+  const [isCashOutDialogOpen, setIsCashOutDialogOpen] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [tempCashOutValue, setTempCashOutValue] = useState('');
 
-  // Initialize cash out values with total buy-in amounts
+  // Initialize cash out values with 0, host gets total stakes
   React.useEffect(() => {
     if (game.players.length > 0 && Object.keys(cashOutValues).length === 0) {
       const initialValues: { [playerId: string]: string } = {};
-      game.players.forEach(player => {
-        const totalBuyIn = getTotalBuyIn(player);
-        initialValues[player.id] = totalBuyIn.toString();
-      });
+      const totalPot = getTotalPot();
+      
+      // Check if players already have cashOut values from the game object
+      const hasExistingCashOut = game.players.some(player => player.cashOut > 0);
+      
+      if (hasExistingCashOut) {
+        // Use existing cashOut values from the game
+        game.players.forEach(player => {
+          initialValues[player.id] = player.cashOut.toString();
+        });
+      } else {
+        // Set default values: host gets total stakes, others get 0
+        game.players.forEach((player, index) => {
+          if (index === 0) {
+            // Host gets the total stakes initially
+            initialValues[player.id] = totalPot.toString();
+          } else {
+            // Other players start with 0
+            initialValues[player.id] = '0';
+          }
+        });
+      }
+      
       setCashOutValues(initialValues);
     }
   }, [game.players, cashOutValues]);
@@ -59,10 +88,58 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
   };
 
   const updateCashOut = (playerId: string, value: string) => {
-    setCashOutValues(prev => ({
-      ...prev,
+    const newValues = {
+      ...cashOutValues,
       [playerId]: value
-    }));
+    };
+    
+    // Auto-calculate the host's cashout
+    const updatedValues = autoCalculateHost(newValues);
+    setCashOutValues(updatedValues);
+  };
+
+  const autoCalculateHost = (values: { [playerId: string]: string }) => {
+    const totalPot = getTotalPot();
+    const playerIds = game.players.map(p => p.id);
+    const hostId = playerIds[0]; // First player is the host
+    
+    // Calculate total cashout excluding the host
+    const totalExcludingHost = playerIds.slice(1).reduce((sum, playerId) => {
+      return sum + (parseFloat(values[playerId]) || 0);
+    }, 0);
+    
+    // Calculate what the host should get
+    const hostAmount = Math.max(0, totalPot - totalExcludingHost);
+    
+    return {
+      ...values,
+      [hostId]: hostAmount.toFixed(2)
+    };
+  };
+
+  const openCashOutDialog = (player: Player) => {
+    console.log('Opening dialog for player:', player.name);
+    const playerIndex = game.players.findIndex(p => p.id === player.id);
+    const isHost = playerIndex === 0;
+    
+    if (isHost) {
+      // Don't allow editing the host as it's auto-calculated
+      return;
+    }
+    
+    setSelectedPlayer(player);
+    setTempCashOutValue(cashOutValues[player.id] || '');
+    setIsCashOutDialogOpen(true);
+  };
+
+  const saveCashOutValue = () => {
+    console.log('Saving cashout value:', tempCashOutValue, 'for player:', selectedPlayer?.name);
+    if (selectedPlayer) {
+      updateCashOut(selectedPlayer.id, tempCashOutValue);
+      setIsCashOutDialogOpen(false);
+      setSelectedPlayer(null);
+      setTempCashOutValue('');
+    }
   };
 
   const canViewSummary = () => {
@@ -170,9 +247,18 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
             const isProfit = netResult > 0;
             const isComplete = cashOutValues[player.id] && parseFloat(cashOutValues[player.id]) > 0;
             const isHost = index === 0; // First player is considered the host
+            const isAutoCalculated = isHost; // Host gets auto-calculated
             
             return (
-              <Card key={player.id} className="p-4 border border-border/50 rounded-xl">
+              <Card 
+                key={player.id} 
+                className={`p-4 border border-border/50 rounded-xl transition-colors ${
+                  isAutoCalculated 
+                    ? 'bg-muted/10 cursor-not-allowed' 
+                    : 'hover:bg-muted/20 cursor-pointer'
+                }`}
+                onClick={() => openCashOutDialog(player)}
+              >
                 <div className="space-y-3">
                   {/* Player Header */}
                   <div className="flex items-center gap-3">
@@ -194,22 +280,18 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
                         Total buyin: ${getTotalBuyIn(player)}
                       </p>
                     </div>
-                  </div>
-
-                  {/* Cash Out Input */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-muted-foreground">
-                      Cash Out Amount
-                    </label>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        value={cashOutValues[player.id] || ''}
-                        onChange={(e) => updateCashOut(player.id, e.target.value)}
-                        className="pl-10 rounded-lg"
-                      />
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-primary">
+                        ${cashOutValues[player.id] || '0'}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {isAutoCalculated ? 'Auto-calculated' : 'Cash Out'}
+                      </p>
+                      {isAutoCalculated && (
+                        <p className="text-xs text-blue-600 font-medium">
+                          Balance
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -253,6 +335,57 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
           </p>
         )}
       </div>
+
+      {/* Cash Out Dialog */}
+      <Dialog open={isCashOutDialogOpen} onOpenChange={setIsCashOutDialogOpen}>
+        <DialogContent className="max-w-sm rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Update Cash Out Amount</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedPlayer && (
+              <>
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                      {getInitials(selectedPlayer.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium">{selectedPlayer.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Total buyin: ${getTotalBuyIn(selectedPlayer)}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Cash Out Amount</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={tempCashOutValue}
+                      onChange={(e) => setTempCashOutValue(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && saveCashOutValue()}
+                      className="pl-10 rounded-lg"
+                    />
+                  </div>
+                </div>
+                
+                <Button
+                  onClick={saveCashOutValue}
+                  disabled={!tempCashOutValue.trim()}
+                  className="w-full rounded-lg"
+                >
+                  Update Amount
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
