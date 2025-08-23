@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Analytics } from "@vercel/analytics/next";
+import { Analytics } from "@vercel/analytics/react";
 import { HomeScreen } from './components/HomeScreen';
 import { NewGameSetup } from './components/NewGameSetup';
 import { GameInProgress } from './components/GameInProgress';
