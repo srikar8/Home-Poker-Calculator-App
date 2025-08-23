@@ -39,6 +39,7 @@ export interface Game {
   players: Player[];
   buyInAmount: number;
   hostFee: number;
+  defaultRebuyAmount: number;
   hostId: string;
   rebuyHistory: RebuyTransaction[];
   settlementTransactions: SettlementTransaction[];
@@ -48,7 +49,11 @@ export interface Game {
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
-  const [currentGame, setCurrentGame] = useState<Game | null>(null);
+  const [currentGame, setCurrentGame] = useState<Game | null>(() => {
+    // Load current game from localStorage on app initialization
+    const savedGame = localStorage.getItem('currentGame');
+    return savedGame ? JSON.parse(savedGame) : null;
+  });
   const [pastGames, setPastGames] = useState<Game[]>([
     {
       id: '1',
@@ -60,6 +65,7 @@ export default function App() {
       ],
       buyInAmount: 50,
       hostFee: 5,
+      defaultRebuyAmount: 50,
       hostId: '1',
       rebuyHistory: [
         { id: '1', playerId: '1', playerName: 'Alice', amount: 25, timestamp: '14:30' },
@@ -81,6 +87,7 @@ export default function App() {
       ],
       buyInAmount: 100,
       hostFee: 5,
+      defaultRebuyAmount: 50,
       hostId: '1',
       rebuyHistory: [
         { id: '1', playerId: '2', playerName: 'Bob', amount: 50, timestamp: '16:20' }
@@ -101,7 +108,7 @@ export default function App() {
     window.scrollTo(0, 0);
   };
 
-  const createNewGame = (players: Omit<Player, 'buyIn' | 'rebuys' | 'cashOut'>[], buyInAmount: number, hostFee: number, hostId: string) => {
+  const createNewGame = (players: Omit<Player, 'buyIn' | 'rebuys' | 'cashOut'>[], buyInAmount: number, hostFee: number, defaultRebuyAmount: number, hostId: string) => {
     const effectiveBuyIn = buyInAmount - hostFee; // Subtract host fee from buy-in amount
     const newGame: Game = {
       id: Date.now().toString(),
@@ -114,6 +121,7 @@ export default function App() {
       })),
       buyInAmount,
       hostFee,
+      defaultRebuyAmount,
       hostId,
       rebuyHistory: [],
       settlementTransactions: [],
@@ -121,16 +129,34 @@ export default function App() {
       isActive: true
     };
     setCurrentGame(newGame);
+    // Save the new game to localStorage
+    localStorage.setItem('currentGame', JSON.stringify(newGame));
     navigateToScreen('gameInProgress');
   };
 
   const updateGame = (updatedGame: Game) => {
     setCurrentGame(updatedGame);
+    // Auto-save the current game to localStorage
+    localStorage.setItem('currentGame', JSON.stringify(updatedGame));
+  };
+
+  const saveGameToHome = () => {
+    // Keep the current game active but navigate to home
+    // The game will remain in localStorage and can be resumed
+    navigateToScreen('home');
+  };
+
+  const resumeGame = () => {
+    if (currentGame && currentGame.isActive) {
+      navigateToScreen('gameInProgress');
+    }
   };
 
   const finishGame = (game: Game) => {
     setPastGames(prev => [game, ...prev]);
     setCurrentGame(null);
+    // Clear the current game from localStorage when finished
+    localStorage.removeItem('currentGame');
   };
 
   return (
@@ -140,8 +166,10 @@ export default function App() {
         {currentScreen === 'home' && (
           <HomeScreen
             pastGames={pastGames}
+            currentGame={currentGame}
             onStartNewGame={() => navigateToScreen('newGame')}
             onViewPastGame={(game) => navigateToScreen('pastGameDetails', game)}
+            onResumeGame={resumeGame}
           />
         )}
         
@@ -158,6 +186,7 @@ export default function App() {
             onBack={() => navigateToScreen('home')}
             onUpdateGame={updateGame}
             onEndGame={() => navigateToScreen('cashOut')}
+            onSaveAndLeave={saveGameToHome}
           />
         )}
         
@@ -192,7 +221,10 @@ export default function App() {
         {currentScreen === 'pastGameDetails' && currentGame && (
           <PastGameDetails
             game={currentGame}
-            onBack={() => navigateToScreen('home')}
+            onBack={() => {
+              setCurrentGame(null);
+              navigateToScreen('home');
+            }}
           />
         )}
       </div>

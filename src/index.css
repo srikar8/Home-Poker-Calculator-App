@@ -4699,3 +4699,158 @@ html {
     opacity: 0;
   }
 }
+
+/* Header Section Styles */
+.header-container {
+  padding: 4rem 1.5rem 2.5rem;
+  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.1), transparent);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.poker-suits-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.poker-suit {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.poker-suit.spade {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.poker-suit.heart {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.poker-suit.diamond {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.poker-suit.club {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+}
+
+.poker-suit-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: white;
+}
+
+.poker-chips-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.poker-chip {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px -2px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.3), inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.poker-chip.red {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  border: 2px solid #991b1b;
+}
+
+.poker-chip.blue {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border: 2px solid #1e40af;
+  opacity: 0.9;
+}
+
+.poker-chip.green {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  border: 2px solid #166534;
+  opacity: 0.8;
+}
+
+.poker-chip.yellow {
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+  border: 2px solid #a16207;
+  opacity: 0.7;
+}
+
+.poker-chip-center {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  font-weight: bold;
+}
+
+.poker-chip-center.red {
+  background: linear-gradient(135deg, #fef2f2, #fecaca);
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+}
+
+.poker-chip-center.blue {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border: 1px solid #93c5fd;
+  color: #2563eb;
+}
+
+.poker-chip-center.green {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 1px solid #86efac;
+  color: #16a34a;
+}
+
+.poker-chip-center.yellow {
+  background: linear-gradient(135deg, #fefce8, #fef3c7);
+  border: 1px solid #fde047;
+  color: #eab308;
+}
+
+.header-text-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.header-title {
+  font-size: 3rem;
+  font-weight: 900;
+  color: #1f2937;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  margin: 0;
+}
+
+.header-title-accent {
+  color: #2563eb;
+  background: linear-gradient(to right, #2563eb, #1d4ed8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-subtitle {
+  font-size: 1.25rem;
+  color: #6b7280;
+  font-weight: 600;
+  margin: 0;
+}

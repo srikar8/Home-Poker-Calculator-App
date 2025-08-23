@@ -23,6 +23,7 @@ interface CashOutScreenProps {
 export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: CashOutScreenProps) {
   const [cashOutValues, setCashOutValues] = useState<{ [playerId: string]: string }>({});
   const [isCashOutDialogOpen, setIsCashOutDialogOpen] = useState(false);
+  const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [tempCashOutValue, setTempCashOutValue] = useState('');
 
@@ -148,6 +149,10 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
     return Math.abs(totalCashOut - totalPot) < 0.01; // Allow for small rounding differences
   };
 
+  const showConfirmationDialog = () => {
+    setIsConfirmationDialogOpen(true);
+  };
+
   const proceedToSummary = () => {
     const updatedGame = {
       ...game,
@@ -159,6 +164,11 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
     };
     onUpdateGame(updatedGame);
     onViewSummary();
+    setIsConfirmationDialogOpen(false);
+  };
+
+  const cancelConfirmation = () => {
+    setIsConfirmationDialogOpen(false);
   };
 
   // Calculate header and bottom heights for proper spacing
@@ -323,7 +333,7 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
       {/* Bottom Action - Fixed to screen bottom */}
       <div className="fixed bottom-0 left-0 right-0 p-6 border-t border-border/50 bg-background z-10" id="bottom-button">
         <Button
-          onClick={proceedToSummary}
+          onClick={showConfirmationDialog}
           disabled={!canViewSummary()}
           className="w-full h-12 text-base rounded-xl"
         >
@@ -383,6 +393,49 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
                 </Button>
               </>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={isConfirmationDialogOpen} onOpenChange={setIsConfirmationDialogOpen}>
+        <DialogContent className="max-w-sm rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Confirm Cash Out</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to proceed to the summary? This will finalize the cash out amounts for all players.
+              </p>
+              
+              <div className="p-3 bg-muted/50 rounded-lg space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total Stakes:</span>
+                  <span className="font-medium">${getTotalPot()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Cash Out Total:</span>
+                  <span className="font-medium text-green-600">${getTotalCashOut()}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={cancelConfirmation}
+                className="flex-1 rounded-lg"
+              >
+                Keep Editing
+              </Button>
+              <Button
+                onClick={proceedToSummary}
+                className="flex-1 rounded-lg"
+              >
+                Confirm & View Summary
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

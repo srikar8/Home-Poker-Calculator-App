@@ -298,7 +298,8 @@ export function SettlementScreen({ game, onBack, onFinishGame }: SettlementScree
           onClick={() => {
             const gameWithSettlements = {
               ...game,
-              settlementTransactions: simplifiedTransactions
+              settlementTransactions: simplifiedTransactions,
+              isActive: false
             };
             onFinishGame(gameWithSettlements);
           }}

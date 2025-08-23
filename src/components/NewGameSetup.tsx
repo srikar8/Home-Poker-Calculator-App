@@ -17,7 +17,7 @@ import {
 
 interface NewGameSetupProps {
   onBack: () => void;
-  onStartGame: (players: { id: string; name: string; avatar?: string }[], buyInAmount: number, hostFee: number, hostId: string) => void;
+  onStartGame: (players: { id: string; name: string; avatar?: string }[], buyInAmount: number, hostFee: number, defaultRebuyAmount: number, hostId: string) => void;
 }
 
 export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
@@ -25,6 +25,7 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
   const [newPlayerName, setNewPlayerName] = useState('');
   const [buyInAmount, setBuyInAmount] = useState('50');
   const [hostFee, setHostFee] = useState('5');
+  const [defaultRebuyAmount, setDefaultRebuyAmount] = useState('50');
   const [selectedHostId, setSelectedHostId] = useState<string>('');
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
   const [isGameStakesDialogOpen, setIsGameStakesDialogOpen] = useState(false);
@@ -132,18 +133,18 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
       {/* Scrollable Content Area */}
       <div className="flex-1 overflow-y-auto" style={{ paddingTop: 'var(--header-height, 80px)', paddingBottom: 'var(--bottom-height, 80px)' }}>
         <div className="p-6 space-y-6">
-          {/* Buy-in Amount */}
+          {/* Game Stakes */}
           <Card className="p-4 border border-border/50 rounded-xl">
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-muted-foreground" />
                 <h2 className="text-sm font-medium">Game Stakes</h2>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="buy-in-amount" className="text-sm">
-                    Buy-in Amount
+              <div className="flex items-end gap-3">
+                <div className="flex-1">
+                  <Label htmlFor="buy-in-amount" className="text-xs text-muted-foreground mb-1 block">
+                    Buy-in
                   </Label>
                   <Input
                     id="buy-in-amount"
@@ -151,12 +152,12 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
                     placeholder="50"
                     value={buyInAmount}
                     onChange={(e) => setBuyInAmount(e.target.value)}
-                    className="rounded-lg border-border/50"
+                    className="h-8 text-sm rounded-md border-border/50"
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="host-fee" className="text-sm">
+                <div className="flex-1">
+                  <Label htmlFor="host-fee" className="text-xs text-muted-foreground mb-1 block">
                     Host Fee
                   </Label>
                   <Input
@@ -165,28 +166,44 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
                     placeholder="5"
                     value={hostFee}
                     onChange={(e) => setHostFee(e.target.value)}
-                    className="rounded-lg border-border/50"
+                    className="h-8 text-sm rounded-md border-border/50"
+                  />
+                </div>
+
+                <div className="flex-1">
+                  <Label htmlFor="default-rebuy" className="text-xs text-muted-foreground mb-1 block">
+                    Rebuy
+                  </Label>
+                  <Input
+                    id="default-rebuy"
+                    type="number"
+                    placeholder="50"
+                    value={defaultRebuyAmount}
+                    onChange={(e) => setDefaultRebuyAmount(e.target.value)}
+                    className="h-8 text-sm rounded-md border-border/50"
                   />
                 </div>
               </div>
               
               {players.length > 0 && (
                 <div className="pt-2 border-t border-border/30">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Per player pays:</span>
-                    <span className="font-medium">${getTotalPlayerCost()}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">BuyIn per player:</span>
-                    <span className="font-medium">${getEffectiveBuyIn()}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total Stakes:</span>
-                    <span className="font-medium text-blue-600">${getTotalPotContribution()}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Host fees:</span>
-                    <span className="font-medium text-green-600">${getTotalHostFeeCollection()}</span>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Per player pays:</span>
+                      <span className="font-medium">${getTotalPlayerCost()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">BuyIn per player:</span>
+                      <span className="font-medium">${getEffectiveBuyIn()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Total Stakes:</span>
+                      <span className="font-medium text-blue-600">${getTotalPotContribution()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Host fees:</span>
+                      <span className="font-medium text-green-600">${getTotalHostFeeCollection()}</span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -197,11 +214,10 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
            <Dialog open={isAddPlayerDialogOpen} onOpenChange={setIsAddPlayerDialogOpen}>
              <DialogTrigger asChild>
                <Button 
-                 variant="outline"
-                 className="w-full h-12 text-base rounded-xl border-dashed border-2 hover:border-primary/50 hover:bg-primary/5"
+                 className="w-full h-12 text-base rounded-xl"
                >
                  <Plus className="w-4 h-4 mr-2" />
-                 Add New Player
+                 Add Player
                </Button>
              </DialogTrigger>
              <DialogContent className="max-w-sm rounded-xl">
@@ -292,7 +308,7 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
       {/* Bottom Action - Fixed to screen bottom */}
       <div className="fixed bottom-0 left-0 right-0 p-6 border-t border-border/50 bg-background z-10" id="bottom-button">
         <Button
-          onClick={() => onStartGame(players, parseFloat(buyInAmount), parseFloat(hostFee), selectedHostId)}
+          onClick={() => onStartGame(players, parseFloat(buyInAmount), parseFloat(hostFee), parseFloat(defaultRebuyAmount), selectedHostId)}
           disabled={!canStartGame}
           className="w-full h-12 text-base rounded-xl"
         >

@@ -1,18 +1,20 @@
-import React from 'react';
-import { Button } from './ui/button';
+import React, { useState } from 'react';
 import { Card } from './ui/card';
-import { Avatar, AvatarFallback } from './ui/avatar';
-import { Badge } from './ui/badge';
-import { Plus, Clock, DollarSign, Users, Calendar, ArrowRight, Trophy } from 'lucide-react';
+import { Plus, Play, Clock, DollarSign, Users, ChevronDown, ChevronRight, Spade, Calendar, Heart, Diamond, Club } from 'lucide-react';
 import { Game } from '../App';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
 interface HomeScreenProps {
   pastGames: Game[];
+  currentGame: Game | null;
   onStartNewGame: () => void;
   onViewPastGame: (game: Game) => void;
+  onResumeGame: () => void;
 }
 
-export function HomeScreen({ pastGames, onStartNewGame, onViewPastGame }: HomeScreenProps) {
+export function HomeScreen({ pastGames, currentGame, onStartNewGame, onViewPastGame, onResumeGame }: HomeScreenProps) {
+  const [isRecentGamesOpen, setIsRecentGamesOpen] = useState(true);
+  
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -22,103 +24,247 @@ export function HomeScreen({ pastGames, onStartNewGame, onViewPastGame }: HomeSc
     });
   };
 
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
-  const getBiggestWinner = (game: Game) => {
-    const getNetResult = (player: any) => {
-      return player.cashOut - (game.buyInAmount + player.rebuys);
-    };
-    
-    return game.players.reduce((biggest, player) => {
-      const currentNet = getNetResult(player);
-      const biggestNet = getNetResult(biggest);
-      return currentNet > biggestNet ? player : biggest;
-    });
+  const getCurrentPot = () => {
+    if (!currentGame) return 0;
+    return currentGame.players.reduce((sum, player) => sum + (player.buyIn + player.rebuys), 0);
   };
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Header */}
-      <div className="p-6 pb-4 bg-background border-b border-border/50">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-medium text-foreground" style={{ fontSize: '3rem', paddingTop: '20vh' }}>Pre Flop ALL IN</h1>
-            <p className="text-sm text-muted-foreground mt-1">Manage your poker nights</p>
+    <div className="h-screen flex flex-col bg-gradient-to-b from-background to-muted/20">
+      {/* Header Section */}
+      <div className="header-container">
+        <div className="header-content">
+          <div className="poker-suits-container">
+            <div className="poker-suit spade">
+              <Spade className="poker-suit-icon" />
+            </div>
+            <div className="poker-suit heart">
+              <Heart className="poker-suit-icon" />
+            </div>
+            <div className="poker-suit diamond">
+              <Diamond className="poker-suit-icon" />
+            </div>
+            <div className="poker-suit club">
+              <Club className="poker-suit-icon" />
+            </div>
           </div>
+          <div className="poker-chips-container">
+            {/* Red Chip - $5 */}
+            <div className="poker-chip red">
+              <div className="poker-chip-center red">5</div>
+            </div>
+            
+            {/* Blue Chip - $10 */}
+            <div className="poker-chip blue">
+              <div className="poker-chip-center blue">10</div>
+            </div>
+            
+            {/* Green Chip - $25 */}
+            <div className="poker-chip green">
+              <div className="poker-chip-center green">25</div>
+            </div>
+            
+            {/* Yellow Chip - $50 */}
+            <div className="poker-chip yellow">
+              <div className="poker-chip-center yellow">50</div>
+            </div>
+          </div>
+        </div>
+        <div className="header-text-container">
+          <h1 className="header-title">
+            Pre Flop <span className="header-title-accent">ALL IN</span>
+          </h1>
+          <p className="header-subtitle">Manage your poker nights</p>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col" style={{ paddingTop: '5vh' }}>
-        {/* Start New Game - Centered */}
-        <div className="flex items-center justify-center p-6">
+      {/* Main Action Cards */}
+      <div className="px-6 space-y-4 mb-8">
+        {/* Resume Game Card - Only show if there's an active game */}
+        {currentGame && currentGame.isActive && (
           <Card 
-            className="p-12 border border-border/50 shadow-sm rounded-xl cursor-pointer hover:bg-muted/20 transition-colors max-w-md w-full" 
-            onClick={onStartNewGame}
+            className="p-6 border-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/40 dark:via-indigo-950/40 dark:to-purple-950/40 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:scale-[1.03] hover:-translate-y-1 border-l-4 border-l-blue-500 hover:border-l-blue-400"
+            onClick={onResumeGame}
+            style={{
+              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 25%, #bfdbfe 50%, #93c5fd 75%, #3b82f6 100%)',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.03) translateY(-4px)';
+              e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 20px -5px rgba(0, 0, 0, 0.1)';
+              e.currentTarget.style.background = 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 25%, #93c5fd 50%, #3b82f6 75%, #2563eb 100%)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1) translateY(0)';
+              e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+              e.currentTarget.style.background = 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 25%, #bfdbfe 50%, #93c5fd 75%, #3b82f6 100%)';
+            }}
           >
-            <div className="flex items-center h-full px-6 py-4">
-              <div className="flex-1 space-y-2 pr-6">
-                <h2 className="text-2xl font-semibold text-foreground">Start New Game</h2>
-                <p className="text-base text-muted-foreground">Create a new poker night and track your game</p>
+            <div className="flex items-center gap-4">
+              <div 
+                className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg"
+                style={{
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%)',
+                  boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -2px rgba(59, 130, 246, 0.2)'
+                }}
+              >
+                <Play className="w-6 h-6 text-white fill-white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
               </div>
-              <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center flex-shrink-0">
-                <Plus className="w-10 h-10 text-green-600" />
+              <div className="flex-1">
+                <h3 className="font-bold text-blue-900 dark:text-blue-100 mb-1 text-lg">Resume Game</h3>
+                <div className="flex items-center gap-4 text-sm text-blue-700 dark:text-blue-300">
+                  <div className="flex items-center gap-1">
+                    <Users className="w-4 h-4" />
+                    <span>{currentGame.players.length} players</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="w-4 h-4" />
+                    <span>${getCurrentPot()} pot</span>
+                  </div>
+                </div>
               </div>
+              <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse" style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
             </div>
           </Card>
-        </div>
+        )}
 
-
-
-        {/* Past Games Section */}
-        <div className="p-6 space-y-4" style={{ paddingTop: '5vh' }}>
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-lg font-medium text-foreground">Recent Games</h2>
-          </div>
-          
-          {pastGames.length > 0 ? (
-            <div className="space-y-3">
-              {pastGames.map((game) => (
-                <Card 
-                  key={game.id} 
-                  className="p-4 border border-border/50 shadow-sm rounded-xl cursor-pointer hover:bg-muted/20 transition-colors"
-                  onClick={() => onViewPastGame(game)}
-                >
-                  <div className="flex justify-between items-center">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-foreground">
-                        {formatDate(game.date)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {game.players.length} players
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-sm font-medium text-foreground">
-                          ${game.totalPot}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">Total Pot</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+        {/* Start New Game Card */}
+        <Card 
+          className="p-6 border-0 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-emerald-950/40 dark:via-green-950/40 dark:to-teal-950/40 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:scale-[1.03] hover:-translate-y-1 border-l-4 border-l-emerald-500 hover:border-l-emerald-400"
+          onClick={onStartNewGame}
+          style={{
+            background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 25%, #a7f3d0 50%, #6ee7b7 75%, #34d399 100%)',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.03) translateY(-4px)';
+            e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 20px -5px rgba(0, 0, 0, 0.1)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 25%, #6ee7b7 50%, #34d399 75%, #10b981 100%)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1) translateY(0)';
+            e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 25%, #a7f3d0 50%, #6ee7b7 75%, #34d399 100%)';
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <div 
+              className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg"
+              style={{
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%)',
+                boxShadow: '0 10px 15px -3px rgba(16, 185, 129, 0.3), 0 4px 6px -2px rgba(16, 185, 129, 0.2)'
+              }}
+            >
+              <Plus className="w-6 h-6 text-white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
             </div>
-          ) : (
-            <Card className="p-8 text-center border border-border/50 rounded-xl">
-              <div className="text-muted-foreground">
-                <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No games yet</p>
-                <p className="text-xs mt-1">Start your first poker night!</p>
+            <div className="flex-1">
+              <h3 className="font-bold text-emerald-900 dark:text-emerald-100 mb-1 text-lg">Start New Game</h3>
+              <p className="text-sm text-emerald-700 dark:text-emerald-300">Set up players and begin a fresh poker night</p>
+            </div>
+            <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse" style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
+          </div>
+        </Card>
+
+        {/* Recent Games Section */}
+        <Collapsible open={isRecentGamesOpen} onOpenChange={setIsRecentGamesOpen}>
+          <CollapsibleTrigger asChild>
+            <Card 
+              className="p-6 border-0 bg-gradient-to-br from-purple-50 via-indigo-50 to-slate-100 dark:from-purple-950/40 dark:via-indigo-950/40 dark:to-slate-900/40 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:scale-[1.03] hover:-translate-y-1 border-l-4 border-l-purple-500 hover:border-l-purple-400"
+              style={{
+                background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 25%, #e9d5ff 50%, #c084fc 75%, #8b5cf6 100%)',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.03) translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 20px -5px rgba(0, 0, 0, 0.1)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 25%, #c084fc 50%, #8b5cf6 75%, #7c3aed 100%)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 25%, #e9d5ff 50%, #c084fc 75%, #8b5cf6 100%)';
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg"
+                    style={{
+                      background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%)',
+                      boxShadow: '0 10px 15px -3px rgba(139, 92, 246, 0.3), 0 4px 6px -2px rgba(139, 92, 246, 0.2)'
+                    }}
+                  >
+                    <Clock className="w-6 h-6 text-white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-purple-900 dark:text-purple-100 mb-1 text-lg">Recent Games</h3>
+                    <p className="text-sm text-purple-700 dark:text-purple-300">
+                      {pastGames.length} game{pastGames.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+                {isRecentGamesOpen ? (
+                  <ChevronDown className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                )}
               </div>
             </Card>
-          )}
-        </div>
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent>
+            <div className="space-y-3 mt-3">
+              {pastGames.length > 0 ? (
+                pastGames.map((game, index) => (
+                  <Card 
+                    key={game.id} 
+                    className="p-6 border-0 bg-gradient-to-r from-gray-50 to-slate-100 dark:from-gray-950/50 dark:to-slate-900/50 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02] border-l-4 border-l-gray-500"
+                    onClick={() => onViewPastGame(game)}
+                    style={{ 
+                      animationDelay: isRecentGamesOpen ? `${index * 50}ms` : '0ms'
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-xl flex items-center justify-center shadow-md">
+                          <Calendar className="w-6 h-6 text-gray-700 dark:text-gray-200" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                            {formatDate(game.date)}
+                          </h3>
+                          <div className="flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300">
+                            <div className="flex items-center gap-1">
+                              <Users className="w-4 h-4" />
+                              <span>{game.players.length} players</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="w-4 h-4" />
+                              <span>${game.totalPot} stakes</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              ) : (
+                <Card className="p-8 text-center border-dashed border-2 border-border/50">
+                  <div className="text-muted-foreground">
+                    <div className="w-12 h-12 mx-auto mb-3 bg-muted/50 rounded-full flex items-center justify-center">
+                      <Clock className="w-6 h-6 opacity-50" />
+                    </div>
+                    <p className="font-medium">No games yet</p>
+                    <p className="text-sm mt-1">Start your first poker night!</p>
+                  </div>
+                </Card>
+              )}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
     </div>
   );

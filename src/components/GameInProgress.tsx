@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Input } from './ui/input';
-import { ArrowLeft, Plus, DollarSign, TrendingUp, Clock, User, ChevronDown, ChevronRight, Users } from 'lucide-react';
+import { ArrowLeft, Plus, DollarSign, TrendingUp, Clock, User, ChevronDown, ChevronRight, Users, Trash2 } from 'lucide-react';
 import { Game, Player, RebuyTransaction } from '../App';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import {
@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from './ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
@@ -20,15 +21,17 @@ interface GameInProgressProps {
   onBack: () => void;
   onUpdateGame: (game: Game) => void;
   onEndGame: () => void;
+  onSaveAndLeave: () => void;
 }
 
-export function GameInProgress({ game, onBack, onUpdateGame, onEndGame }: GameInProgressProps) {
+export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAndLeave }: GameInProgressProps) {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>('');
-  const [rebuyAmount, setRebuyAmount] = useState('50');
+  const [rebuyAmount, setRebuyAmount] = useState(game.defaultRebuyAmount.toString());
   const [isRebuyDialogOpen, setIsRebuyDialogOpen] = useState(false);
   const [isPlayersListOpen, setIsPlayersListOpen] = useState(false);
   const [isRebuyHistoryOpen, setIsRebuyHistoryOpen] = useState(true);
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
+  const [isLeaveConfirmationOpen, setIsLeaveConfirmationOpen] = useState(false);
   const [newPlayerName, setNewPlayerName] = useState('');
 
   const getInitials = (name: string) => {
@@ -64,8 +67,26 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame }: GameIn
       
       onUpdateGame(updatedGame);
       setSelectedPlayerId('');
-      setRebuyAmount('50');
+      setRebuyAmount(game.defaultRebuyAmount.toString());
       setIsRebuyDialogOpen(false);
+    }
+  };
+
+  const removeRebuy = (rebuyId: string) => {
+    const rebuyToRemove = game.rebuyHistory.find(r => r.id === rebuyId);
+    
+    if (rebuyToRemove) {
+      const updatedGame = {
+        ...game,
+        players: game.players.map(p =>
+          p.id === rebuyToRemove.playerId
+            ? { ...p, rebuys: p.rebuys - rebuyToRemove.amount }
+            : p
+        ),
+        rebuyHistory: game.rebuyHistory.filter(r => r.id !== rebuyId)
+      };
+      
+      onUpdateGame(updatedGame);
     }
   };
 
@@ -139,7 +160,7 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame }: GameIn
           <Button
             variant="ghost"
             size="sm"
-            onClick={onBack}
+            onClick={() => setIsLeaveConfirmationOpen(true)}
             className="p-2 rounded-full"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -147,67 +168,6 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame }: GameIn
           <div className="flex-1">
             <h1 className="text-lg font-medium">Game in Progress</h1>
           </div>
-          
-          {/* Add Rebuy Button */}
-          <Dialog open={isRebuyDialogOpen} onOpenChange={setIsRebuyDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                className="px-3 py-2 rounded-lg"
-                size="sm"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Rebuy
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-sm rounded-xl">
-              <DialogHeader>
-                <DialogTitle>Add Rebuy</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Select Player</label>
-                  <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
-                    <SelectTrigger className="rounded-lg">
-                      <SelectValue placeholder="Choose player" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {game.players.map((player) => (
-                        <SelectItem key={player.id} value={player.id}>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="w-5 h-5">
-                              <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                                {getInitials(player.name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            {player.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Amount</label>
-                  <Input
-                    type="number"
-                    placeholder="50"
-                    value={rebuyAmount}
-                    onChange={(e) => setRebuyAmount(e.target.value)}
-                    className="rounded-lg"
-                  />
-                </div>
-                
-                <Button
-                  onClick={addRebuy}
-                  disabled={!selectedPlayerId || !rebuyAmount || parseFloat(rebuyAmount) <= 0}
-                  className="w-full rounded-lg"
-                >
-                  Add Rebuy
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
 
@@ -233,59 +193,120 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame }: GameIn
             </div>
           </Card>
 
-          {/* Add New Player */}
-          <Dialog open={isAddPlayerDialogOpen} onOpenChange={setIsAddPlayerDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                variant="outline"
-                className="w-full h-12 text-base rounded-xl border-dashed border-2 hover:border-primary/50 hover:bg-primary/5"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add New Player
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-sm rounded-xl">
-              <DialogHeader>
-                <DialogTitle>Add New Player</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Player Name</label>
-                  <Input
-                    placeholder="Enter player name"
-                    value={newPlayerName}
-                    onChange={(e) => setNewPlayerName(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addNewPlayer()}
-                    className="rounded-lg"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Payment Breakdown</label>
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm font-medium">${game.buyInAmount}</p>
-                        <p className="text-xs text-muted-foreground">Total amount to pay</p>
-                      </div>
-                      <div className="text-right text-xs text-muted-foreground">
-                        <p>To pot: ${game.buyInAmount - game.hostFee}</p>
-                        <p>Host fee: ${game.hostFee}</p>
+          {/* Add New Player and Rebuy Buttons */}
+          <div className="flex gap-3">
+            <Dialog open={isAddPlayerDialogOpen} onOpenChange={setIsAddPlayerDialogOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  className="flex-1 h-12 text-base rounded-xl"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Player
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-sm rounded-xl">
+                <DialogHeader>
+                  <DialogTitle>Add New Player</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Player Name</label>
+                    <Input
+                      placeholder="Enter player name"
+                      value={newPlayerName}
+                      onChange={(e) => setNewPlayerName(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addNewPlayer()}
+                      className="rounded-lg"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Payment Breakdown</label>
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-sm font-medium">${game.buyInAmount}</p>
+                          <p className="text-xs text-muted-foreground">Total amount to pay</p>
+                        </div>
+                        <div className="text-right text-xs text-muted-foreground">
+                          <p>To pot: ${game.buyInAmount - game.hostFee}</p>
+                          <p>Host fee: ${game.hostFee}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
+                  
+                  <Button
+                    onClick={addNewPlayer}
+                    disabled={!newPlayerName.trim()}
+                    className="w-full rounded-lg"
+                  >
+                    Add Player
+                  </Button>
                 </div>
-                
-                <Button
-                  onClick={addNewPlayer}
-                  disabled={!newPlayerName.trim()}
-                  className="w-full rounded-lg"
-                >
-                  Add Player
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+
+                         {/* Add Rebuy Button */}
+             <Dialog open={isRebuyDialogOpen} onOpenChange={setIsRebuyDialogOpen}>
+               <DialogTrigger asChild>
+                 <Button 
+                   className="flex-1 h-12 text-base rounded-xl"
+                 >
+                   <Plus className="w-4 h-4 mr-2" />
+                   Rebuy
+                 </Button>
+               </DialogTrigger>
+              <DialogContent className="max-w-sm rounded-xl">
+                <DialogHeader>
+                  <DialogTitle>Add Rebuy</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Select Player</label>
+                    <Select value={selectedPlayerId} onValueChange={setSelectedPlayerId}>
+                      <SelectTrigger className="rounded-lg">
+                        <SelectValue placeholder="Choose player" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {game.players.map((player) => (
+                          <SelectItem key={player.id} value={player.id}>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="w-5 h-5">
+                                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                  {getInitials(player.name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              {player.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Amount</label>
+                    <Input
+                      type="number"
+                      placeholder="50"
+                      value={rebuyAmount}
+                      onChange={(e) => setRebuyAmount(e.target.value)}
+                      className="rounded-lg"
+                    />
+                  </div>
+                  
+                  <Button
+                    onClick={addRebuy}
+                    disabled={!selectedPlayerId || !rebuyAmount || parseFloat(rebuyAmount) <= 0}
+                    className="w-full rounded-lg"
+                  >
+                    Add Rebuy
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
 
           {/* Players List - Collapsible */}
           <Collapsible open={isPlayersListOpen} onOpenChange={setIsPlayersListOpen}>
@@ -380,6 +401,14 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame }: GameIn
                           <span className="text-xs text-muted-foreground">
                             {rebuy.timestamp}
                           </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeRebuy(rebuy.id)}
+                            className="p-1 h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-5"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
                         </div>
                       </div>
                     </Card>
@@ -400,6 +429,44 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame }: GameIn
           End Game & Cash Out
         </Button>
       </div>
+
+      {/* Leave Game Confirmation Dialog */}
+      <Dialog open={isLeaveConfirmationOpen} onOpenChange={setIsLeaveConfirmationOpen}>
+        <DialogContent className="max-w-sm rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Leave Game?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Your game progress will be automatically saved. You can resume this game anytime from the home screen.
+            </p>
+            <div className="p-3 bg-blue-50/50 rounded-lg">
+              <div className="text-sm">
+                <p className="font-medium text-blue-900">Current Game Status:</p>
+                <p className="text-blue-700">{game.players.length} players • ${game.players.reduce((sum, p) => sum + p.buyIn + p.rebuys, 0)} total stakes</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsLeaveConfirmationOpen(false)}
+              className="flex-1"
+            >
+              Continue Game
+            </Button>
+            <Button
+              onClick={() => {
+                setIsLeaveConfirmationOpen(false);
+                onSaveAndLeave();
+              }}
+              className="flex-1"
+            >
+              Save & Leave
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
