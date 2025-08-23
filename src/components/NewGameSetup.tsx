@@ -7,6 +7,13 @@ import { Badge } from './ui/badge';
 import { ArrowLeft, Plus, X, Users, DollarSign } from 'lucide-react';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './ui/dialog';
 
 interface NewGameSetupProps {
   onBack: () => void;
@@ -19,6 +26,8 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
   const [buyInAmount, setBuyInAmount] = useState('50');
   const [hostFee, setHostFee] = useState('5');
   const [selectedHostId, setSelectedHostId] = useState<string>('');
+  const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
+  const [isGameStakesDialogOpen, setIsGameStakesDialogOpen] = useState(false);
 
   const addPlayer = () => {
     if (newPlayerName.trim()) {
@@ -36,6 +45,7 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
       }
       
       setNewPlayerName('');
+      setIsAddPlayerDialogOpen(false);
     }
   };
 
@@ -167,11 +177,11 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
                     <span className="font-medium">${getTotalPlayerCost()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">To pot per player:</span>
+                    <span className="text-muted-foreground">BuyIn per player:</span>
                     <span className="font-medium">${getEffectiveBuyIn()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total pot:</span>
+                    <span className="text-muted-foreground">Total Stakes:</span>
                     <span className="font-medium text-blue-600">${getTotalPotContribution()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -183,7 +193,43 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
             </div>
           </Card>
 
-
+                     {/* Add Player Dialog */}
+           <Dialog open={isAddPlayerDialogOpen} onOpenChange={setIsAddPlayerDialogOpen}>
+             <DialogTrigger asChild>
+               <Button 
+                 variant="outline"
+                 className="w-full h-12 text-base rounded-xl border-dashed border-2 hover:border-primary/50 hover:bg-primary/5"
+               >
+                 <Plus className="w-4 h-4 mr-2" />
+                 Add New Player
+               </Button>
+             </DialogTrigger>
+             <DialogContent className="max-w-sm rounded-xl">
+               <DialogHeader>
+                 <DialogTitle>Add New Player</DialogTitle>
+               </DialogHeader>
+               <div className="space-y-4">
+                 <div className="space-y-2">
+                   <label className="text-sm font-medium">Player Name</label>
+                   <Input
+                     placeholder="Enter player name"
+                     value={newPlayerName}
+                     onChange={(e) => setNewPlayerName(e.target.value)}
+                     onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
+                     className="rounded-lg"
+                   />
+                 </div>
+                 
+                 <Button
+                   onClick={addPlayer}
+                   disabled={!newPlayerName.trim()}
+                   className="w-full rounded-lg"
+                 >
+                   Add Player
+                 </Button>
+               </div>
+             </DialogContent>
+           </Dialog>
 
           {/* Players List */}
           {players.length > 0 && (
@@ -231,32 +277,6 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
             </Card>
           )}
 
-          {/* Add Player */}
-          <Card className="p-4 border border-border/50 rounded-xl">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-muted-foreground" />
-                <h2 className="text-sm font-medium">Players</h2>
-              </div>
-              
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Player name"
-                  value={newPlayerName}
-                  onChange={(e) => setNewPlayerName(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
-                  className="flex-1 rounded-lg border-border/50"
-                />
-                <Button
-                  onClick={addPlayer}
-                  disabled={!newPlayerName.trim()}
-                  className="px-3 rounded-lg"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
 
           {/* Minimum players message */}
           {players.length === 1 && (
