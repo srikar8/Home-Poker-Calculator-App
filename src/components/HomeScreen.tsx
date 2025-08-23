@@ -41,16 +41,15 @@ export function HomeScreen({ pastGames, onStartNewGame, onViewPastGame }: HomeSc
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="p-6 pb-4 bg-background border-b border-border/50">
-        <h1 className="text-4xl font-medium text-foreground" style={{ fontSize: '4rem' }}>Pre FLOP</h1>
-        <h1 className="text-4xl font-medium text-foreground" style={{ fontSize: '3rem' }}>ALL IN</h1>
+      <div class="p-6 pb-4 bg-background border-b border-border/50">
+        <h1 className="text-4xl font-medium text-foreground" style={{ fontSize: '3rem', paddingTop: '20vh' }}>Pre Flop ALL IN</h1>
         <p className="text-sm text-muted-foreground mt-1">Manage your poker nights</p>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col" style={{ paddingTop: '5vh' }}>
         {/* Start New Game - Centered */}
-        <div className="flex-1 flex items-center justify-center p-6">
+        <div className="flex items-center justify-center p-6">
           <Card 
             className="p-12 border border-border/50 shadow-sm rounded-xl cursor-pointer hover:bg-muted/20 transition-colors max-w-md w-full" 
             onClick={onStartNewGame}
@@ -68,7 +67,7 @@ export function HomeScreen({ pastGames, onStartNewGame, onViewPastGame }: HomeSc
         </div>
 
         {/* Past Games Section */}
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4" style={{ paddingTop: '5vh' }}>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-muted-foreground" />
             <h2 className="text-lg font-medium text-foreground">Recent Games</h2>

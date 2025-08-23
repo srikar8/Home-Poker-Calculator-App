@@ -185,33 +185,6 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
 
 
 
-          {/* Add Player */}
-          <Card className="p-4 border border-border/50 rounded-xl">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-muted-foreground" />
-                <h2 className="text-sm font-medium">Players</h2>
-              </div>
-              
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Player name"
-                  value={newPlayerName}
-                  onChange={(e) => setNewPlayerName(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
-                  className="flex-1 rounded-lg border-border/50"
-                />
-                <Button
-                  onClick={addPlayer}
-                  disabled={!newPlayerName.trim()}
-                  className="px-3 rounded-lg"
-                >
-                  <Plus className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
-
           {/* Players List */}
           {players.length > 0 && (
             <Card className="p-4 border border-border/50 rounded-xl">
@@ -257,6 +230,33 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
               </div>
             </Card>
           )}
+
+          {/* Add Player */}
+          <Card className="p-4 border border-border/50 rounded-xl">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                <h2 className="text-sm font-medium">Players</h2>
+              </div>
+              
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Player name"
+                  value={newPlayerName}
+                  onChange={(e) => setNewPlayerName(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
+                  className="flex-1 rounded-lg border-border/50"
+                />
+                <Button
+                  onClick={addPlayer}
+                  disabled={!newPlayerName.trim()}
+                  className="px-3 rounded-lg"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </Card>
 
           {/* Minimum players message */}
           {players.length === 1 && (
