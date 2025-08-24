@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card } from './ui/card';
-import { Plus, Play, Clock, DollarSign, Users, ChevronDown, ChevronRight, Spade, Calendar, Heart, Diamond, Club } from 'lucide-react';
+import { Plus, Play, Clock, DollarSign, Users, ChevronDown, ChevronRight, Spade, Calendar, Heart, Diamond, Club, Sparkles } from 'lucide-react';
 import { Game } from '../App';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 
@@ -265,6 +265,17 @@ export function HomeScreen({ pastGames, currentGame, onStartNewGame, onViewPastG
             </div>
           </CollapsibleContent>
         </Collapsible>
+      </div>
+
+      {/* Footer - Created by Srikar */}
+      <div className="mt-auto pt-6 pb-4 px-6">
+        <div className="text-center">
+          <p className="text-xs text-muted-foreground/60 font-medium flex items-center justify-center gap-1">
+            <Sparkles className="w-3 h-3" />
+            Created by Srikar | 2025
+            <Sparkles className="w-3 h-3" />
+          </p>
+        </div>
       </div>
     </div>
   );
