@@ -43,8 +43,8 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
         });
       } else {
         // Set default values: host gets total stakes, others get 0
-        game.players.forEach((player, index) => {
-          if (index === 0) {
+        game.players.forEach((player) => {
+          if (player.id === game.hostId) {
             // Host gets the total stakes initially
             initialValues[player.id] = totalPot.toString();
           } else {
@@ -102,10 +102,10 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
   const autoCalculateHost = (values: { [playerId: string]: string }) => {
     const totalPot = getTotalPot();
     const playerIds = game.players.map(p => p.id);
-    const hostId = playerIds[0]; // First player is the host
+    const hostId = game.hostId; // Use the actual hostId from the game
     
     // Calculate total cashout excluding the host
-    const totalExcludingHost = playerIds.slice(1).reduce((sum, playerId) => {
+    const totalExcludingHost = playerIds.filter(id => id !== hostId).reduce((sum, playerId) => {
       return sum + (parseFloat(values[playerId]) || 0);
     }, 0);
     
@@ -120,8 +120,7 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
 
   const openCashOutDialog = (player: Player) => {
     console.log('Opening dialog for player:', player.name);
-    const playerIndex = game.players.findIndex(p => p.id === player.id);
-    const isHost = playerIndex === 0;
+    const isHost = player.id === game.hostId;
     
     if (isHost) {
       // Don't allow editing the host as it's auto-calculated
@@ -256,7 +255,7 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
             const netResult = getNetResult(player);
             const isProfit = netResult > 0;
             const isComplete = cashOutValues[player.id] && parseFloat(cashOutValues[player.id]) > 0;
-            const isHost = index === 0; // First player is considered the host
+            const isHost = player.id === game.hostId; // Use the actual hostId from the game
             const isAutoCalculated = isHost; // Host gets auto-calculated
             
             return (

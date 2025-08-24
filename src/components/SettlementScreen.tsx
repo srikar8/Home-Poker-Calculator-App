@@ -33,7 +33,7 @@ export function SettlementScreen({ game, onBack, onFinishGame }: SettlementScree
   };
 
   const getNetResult = (player: Player) => {
-    const isHost = game.players.indexOf(player) === 0; // First player is the host
+    const isHost = player.id === game.hostId; // Use the actual hostId from the game
     const hostFees = isHost ? (game.hostFee * game.players.length) : 0;
     return (player.cashOut + hostFees) - getTotalInvested(player);
   };

@@ -158,7 +158,7 @@ export function GameSummary({ game, onBack, onSimplifyDebts }: GameSummaryProps)
             const netResult = getNetResult(player);
             const isProfit = netResult > 0;
             const totalInvested = getTotalInvested(player);
-            const isHost = game.players[0].id === player.id; // Check if this player is the host (first player in original game)
+            const isHost = game.hostId === player.id; // Check if this player is the host using the actual hostId
             
             return (
               <Card key={player.id} className="p-4 border border-border/50 rounded-xl">
@@ -169,7 +169,7 @@ export function GameSummary({ game, onBack, onSimplifyDebts }: GameSummaryProps)
                         {getInitials(player.name)}
                       </AvatarFallback>
                     </Avatar>
-                    {index === 0 && isProfit && (
+                    {player.id === game.hostId && isProfit && (
                       <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
                         <Trophy className="w-2 h-2 text-white" />
                       </div>

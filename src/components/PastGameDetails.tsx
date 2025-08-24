@@ -235,7 +235,7 @@ export function PastGameDetails({ game, onBack }: PastGameDetailsProps) {
                       {getInitials(player.name)}
                     </AvatarFallback>
                   </Avatar>
-                  {index === 0 && isProfit && (
+                  {player.id === game.hostId && isProfit && (
                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
                       <Trophy className="w-2 h-2 text-white" />
                     </div>
