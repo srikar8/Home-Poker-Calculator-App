@@ -29,7 +29,7 @@ export function SettlementScreen({ game, onBack, onFinishGame }: SettlementScree
 
   const getTotalInvested = (player: Player) => {
     // Return the full amount paid by the player (including host fee)
-    return game.buyInAmount + player.rebuys;
+    return game.buyInAmount + game.hostFee + player.rebuys;
   };
 
   const getNetResult = (player: Player) => {

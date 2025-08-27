@@ -66,16 +66,16 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const canStartGame = players.length >= 2 && selectedHostId !== '' && parseFloat(buyInAmount) > 0 && parseFloat(hostFee) >= 0 && parseFloat(hostFee) < parseFloat(buyInAmount);
+  const canStartGame = players.length >= 2 && selectedHostId !== '' && parseFloat(buyInAmount) > 0 && parseFloat(hostFee) >= 0;
 
   const getTotalPlayerCost = () => {
-    return parseFloat(buyInAmount) || 0; // Players pay the full buy-in amount
+    const buyIn = parseFloat(buyInAmount) || 0;
+    const fee = parseFloat(hostFee) || 0;
+    return buyIn + fee; // Players pay buy-in + host fee
   };
 
   const getEffectiveBuyIn = () => {
-    const buyIn = parseFloat(buyInAmount) || 0;
-    const fee = parseFloat(hostFee) || 0;
-    return Math.max(0, buyIn - fee); // Amount that goes to the pot per player
+    return parseFloat(buyInAmount) || 0; // Full buy-in amount goes to the pot
   };
 
   const getTotalPotContribution = () => {

@@ -59,9 +59,9 @@ export default function App() {
       id: '1',
       date: '2024-01-15',
       players: [
-        { id: '1', name: 'Alice', buyIn: 45, rebuys: 25, cashOut: 120 }, // 50 - 5 = 45
-        { id: '2', name: 'Bob', buyIn: 45, rebuys: 0, cashOut: 20 }, // 50 - 5 = 45
-        { id: '3', name: 'Charlie', buyIn: 45, rebuys: 25, cashOut: 35 } // 50 - 5 = 45
+        { id: '1', name: 'Alice', buyIn: 50, rebuys: 25, cashOut: 120 }, // Full buy-in amount
+        { id: '2', name: 'Bob', buyIn: 50, rebuys: 0, cashOut: 20 }, // Full buy-in amount
+        { id: '3', name: 'Charlie', buyIn: 50, rebuys: 25, cashOut: 35 } // Full buy-in amount
       ],
       buyInAmount: 50,
       hostFee: 5,
@@ -72,18 +72,18 @@ export default function App() {
         { id: '2', playerId: '3', playerName: 'Charlie', amount: 25, timestamp: '15:45' }
       ],
       settlementTransactions: [
-        { from: { id: '2', name: 'Bob', buyIn: 45, rebuys: 0, cashOut: 20 }, to: { id: '1', name: 'Alice', buyIn: 45, rebuys: 25, cashOut: 120 }, amount: 25 },
-        { from: { id: '3', name: 'Charlie', buyIn: 45, rebuys: 25, cashOut: 35 }, to: { id: '1', name: 'Alice', buyIn: 45, rebuys: 25, cashOut: 120 }, amount: 35 }
+        { from: { id: '2', name: 'Bob', buyIn: 50, rebuys: 0, cashOut: 20 }, to: { id: '1', name: 'Alice', buyIn: 50, rebuys: 25, cashOut: 120 }, amount: 25 },
+        { from: { id: '3', name: 'Charlie', buyIn: 50, rebuys: 25, cashOut: 35 }, to: { id: '1', name: 'Alice', buyIn: 50, rebuys: 25, cashOut: 120 }, amount: 35 }
       ],
-      totalPot: 185, // (45*3) + 25 + 25 = 185
+      totalPot: 200, // (50*3) + 25 + 25 = 200
       isActive: false
     },
     {
       id: '2',
       date: '2024-01-08',
       players: [
-        { id: '1', name: 'Alice', buyIn: 95, rebuys: 0, cashOut: 80 }, // 100 - 5 = 95
-        { id: '2', name: 'Bob', buyIn: 95, rebuys: 50, cashOut: 170 } // 100 - 5 = 95
+        { id: '1', name: 'Alice', buyIn: 100, rebuys: 0, cashOut: 80 }, // Full buy-in amount
+        { id: '2', name: 'Bob', buyIn: 100, rebuys: 50, cashOut: 170 } // Full buy-in amount
       ],
       buyInAmount: 100,
       hostFee: 5,
@@ -93,9 +93,9 @@ export default function App() {
         { id: '1', playerId: '2', playerName: 'Bob', amount: 50, timestamp: '16:20' }
       ],
       settlementTransactions: [
-        { from: { id: '1', name: 'Alice', buyIn: 95, rebuys: 0, cashOut: 80 }, to: { id: '2', name: 'Bob', buyIn: 95, rebuys: 50, cashOut: 170 }, amount: 15 }
+        { from: { id: '1', name: 'Alice', buyIn: 100, rebuys: 0, cashOut: 80 }, to: { id: '2', name: 'Bob', buyIn: 100, rebuys: 50, cashOut: 170 }, amount: 15 }
       ],
-      totalPot: 240, // (95*2) + 50 = 240
+      totalPot: 250, // (100*2) + 50 = 250
       isActive: false
     }
   ]);
@@ -109,13 +109,12 @@ export default function App() {
   };
 
   const createNewGame = (players: Omit<Player, 'buyIn' | 'rebuys' | 'cashOut'>[], buyInAmount: number, hostFee: number, defaultRebuyAmount: number, hostId: string) => {
-    const effectiveBuyIn = buyInAmount - hostFee; // Subtract host fee from buy-in amount
     const newGame: Game = {
       id: Date.now().toString(),
       date: new Date().toISOString().split('T')[0],
       players: players.map(p => ({
         ...p,
-        buyIn: effectiveBuyIn, // This is the amount that actually goes to the pot
+        buyIn: buyInAmount, // Full buy-in amount goes to the pot
         rebuys: 0,
         cashOut: 0
       })),
@@ -204,6 +203,7 @@ export default function App() {
             game={currentGame}
             onBack={() => navigateToScreen('cashOut')}
             onSimplifyDebts={() => navigateToScreen('settlement')}
+            onUpdateGame={updateGame}
           />
         )}
         

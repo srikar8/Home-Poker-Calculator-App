@@ -1,25 +1,40 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
-import { ArrowLeft, TrendingUp, TrendingDown, Calculator, Trophy } from 'lucide-react';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { ArrowLeft, TrendingUp, TrendingDown, Calculator, Trophy, DollarSign } from 'lucide-react';
 import { Game, Player } from '../App';
 
 interface GameSummaryProps {
   game: Game;
   onBack: () => void;
   onSimplifyDebts: () => void;
+  onUpdateGame: (game: Game) => void;
 }
 
-export function GameSummary({ game, onBack, onSimplifyDebts }: GameSummaryProps) {
+export function GameSummary({ game, onBack, onSimplifyDebts, onUpdateGame }: GameSummaryProps) {
+  const [hostFee, setHostFee] = useState(game.hostFee.toString());
+
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
+  const updateHostFee = (newFee: string) => {
+    setHostFee(newFee);
+    const feeValue = parseFloat(newFee) || 0;
+    const updatedGame = {
+      ...game,
+      hostFee: feeValue
+    };
+    onUpdateGame(updatedGame);
+  };
+
   const getTotalInvested = (player: Player) => {
     // Return the full amount paid by the player (including host fee)
-    return game.buyInAmount + player.rebuys;
+    return game.buyInAmount + player.rebuys + game.hostFee;
   };
 
   const getNetResult = (player: Player) => {
@@ -107,25 +122,40 @@ export function GameSummary({ game, onBack, onSimplifyDebts }: GameSummaryProps)
                 </div>
               </div>
               
-              {game.hostFee > 0 && (
-                <div className="pt-2 border-t border-border/30">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Game Pot:</span>
-                    <span className="text-sm font-medium">
-                      ${getTotalPot()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Host fees:</span>
-                    <span className="text-sm font-medium text-green-600">
-                      ${getTotalHostFees()}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    (Total = Game Pot + Host Fees)
-                  </p>
+              <div className="pt-2 border-t border-border/30 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Game Pot:</span>
+                  <span className="text-sm font-medium">
+                    ${getTotalPot()}
+                  </span>
                 </div>
-              )}
+                
+                {/* Host Fee Input */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Host Fee (per player):</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      id="host-fee-summary"
+                      type="number"
+                      placeholder="0"
+                      value={hostFee}
+                      onChange={(e) => updateHostFee(e.target.value)}
+                      className="h-8 text-sm rounded-md border-border/50 flex-1"
+                    />
+                    <div className="text-right">
+                      <span className="text-sm font-medium text-green-600">
+                        Total: ${getTotalHostFees()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  (Total Amount = Game Pot + Host Fees)
+                </p>
+              </div>
             </div>
           </Card>
 

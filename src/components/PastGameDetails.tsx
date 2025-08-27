@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
-import { ArrowLeft, TrendingUp, TrendingDown, Calculator, Trophy, DollarSign, Users, Calendar, ArrowRight } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Calculator, Trophy, DollarSign, Users, Calendar, ArrowRight, RefreshCw, Download } from 'lucide-react';
 import { Game, Player } from '../App';
 
 interface PastGameDetailsProps {
@@ -18,13 +18,209 @@ interface Transaction {
 }
 
 export function PastGameDetails({ game, onBack }: PastGameDetailsProps) {
+  const printableContentRef = useRef<HTMLDivElement>(null);
+
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
+  const downloadResults = async () => {
+    console.log('Download button clicked!');
+    
+    if (!printableContentRef.current) {
+      console.error('❌ Printable content ref is not available');
+      return;
+    }
+
+    console.log('✅ Ref found, starting image generation...');
+    console.log('📏 Element dimensions:', {
+      scrollHeight: printableContentRef.current.scrollHeight,
+      scrollWidth: printableContentRef.current.scrollWidth,
+      offsetHeight: printableContentRef.current.offsetHeight,
+      offsetWidth: printableContentRef.current.offsetWidth
+    });
+
+    try {
+      console.log('📦 Loading html2canvas...');
+      const html2canvas = (await import('html2canvas')).default;
+      console.log('✅ html2canvas loaded successfully');
+      
+      // Add a small delay to ensure styles are loaded
+      console.log('⏳ Waiting for styles to load...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log('📸 Starting canvas capture...');
+      const canvas = await html2canvas(printableContentRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 1,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        removeContainer: true,
+        ignoreElements: (element) => {
+          // Skip SVG elements and style/script tags that cause oklch issues
+          return element.tagName === 'STYLE' || 
+                 element.tagName === 'SCRIPT' || 
+                 element.tagName === 'svg' || 
+                 element.tagName === 'SVG';
+        },
+        onclone: (clonedDoc) => {
+          // Remove ALL existing stylesheets
+          const existingStyles = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]');
+          existingStyles.forEach(style => style.remove());
+          
+          // Remove all SVG elements that might have problematic CSS
+          const svgs = clonedDoc.querySelectorAll('svg');
+          svgs.forEach(svg => svg.remove());
+          
+          // Apply comprehensive CSS that matches the original layout
+          const style = clonedDoc.createElement('style');
+          style.textContent = `
+            * {
+              box-sizing: border-box;
+            }
+            body {
+              font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              background: white;
+              color: rgb(15, 23, 42);
+              line-height: 1.5;
+            }
+            
+            /* Spacing utilities */
+            .space-y-4 > * + * { margin-top: 1rem; }
+            .space-y-3 > * + * { margin-top: 0.75rem; }
+            .space-y-2 > * + * { margin-top: 0.5rem; }
+            
+            /* Padding */
+            .p-6 { padding: 1.5rem; }
+            .p-4 { padding: 1rem; }
+            .p-2 { padding: 0.5rem; }
+            .pb-4 { padding-bottom: 1rem; }
+            .pt-2 { padding-top: 0.5rem; }
+            .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+            .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+            
+            /* Margins */
+            .mt-1 { margin-top: 0.25rem; }
+            .mb-1 { margin-top: 0.25rem; }
+            .mb-4 { margin-bottom: 1rem; }
+            
+            /* Typography */
+            .text-2xl { font-size: 1.5rem; line-height: 2rem; font-weight: 500; }
+            .text-lg { font-size: 1.125rem; line-height: 1.75rem; font-weight: 500; }
+            .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+            .text-xs { font-size: 0.75rem; line-height: 1rem; }
+            .font-medium { font-weight: 500; }
+            
+            /* Colors */
+            .text-muted-foreground { color: rgb(100, 116, 139); }
+            .text-green-600 { color: rgb(22, 163, 74); }
+            .text-green-700 { color: rgb(21, 128, 61); }
+            .text-green-800 { color: rgb(22, 101, 52); }
+            .text-green-900 { color: rgb(20, 83, 45); }
+            .text-red-600 { color: rgb(220, 38, 38); }
+            .text-yellow-500 { color: rgb(234, 179, 8); }
+            .text-primary { color: rgb(59, 130, 246); }
+            
+            /* Backgrounds */
+            .bg-white { background-color: white; }
+            .bg-muted\\/20, .bg-gray-50 { background-color: rgb(248, 250, 252); }
+            .bg-green-50 { background-color: rgb(240, 253, 244); }
+            .bg-green-100 { background-color: rgb(220, 252, 231); }
+            .bg-green-950 { background-color: rgb(5, 46, 22); }
+            .bg-red-100 { background-color: rgb(254, 226, 226); }
+            .bg-red-950 { background-color: rgb(69, 10, 10); }
+            .bg-primary\\/10 { background-color: rgb(219, 234, 254); }
+            .bg-yellow-500 { background-color: rgb(234, 179, 8); }
+            
+            /* Layout */
+            .flex { display: flex; }
+            .justify-between { justify-content: space-between; }
+            .justify-center { justify-content: center; }
+            .items-center { align-items: center; }
+            .items-start { align-items: flex-start; }
+            .flex-1 { flex: 1 1 0%; }
+            .text-center { text-align: center; }
+            .text-right { text-align: right; }
+            .relative { position: relative; }
+            .absolute { position: absolute; }
+            
+            /* Gaps */
+            .gap-1 { gap: 0.25rem; }
+            .gap-2 { gap: 0.5rem; }
+            .gap-3 { gap: 0.75rem; }
+            .gap-4 { gap: 1rem; }
+            
+            /* Borders and Radius */
+            .border { border: 1px solid rgb(226, 232, 240); }
+            .border-t { border-top: 1px solid rgb(226, 232, 240); }
+            .border-green-200 { border: 1px solid rgb(187, 247, 208); }
+            .border-green-800 { border: 1px solid rgb(22, 101, 52); }
+            .rounded-xl { border-radius: 0.75rem; }
+            .rounded-lg { border-radius: 0.5rem; }
+            .rounded-full { border-radius: 9999px; }
+            
+            /* Sizing */
+            .w-2 { width: 0.5rem; }
+            .h-2 { height: 0.5rem; }
+            .w-4 { width: 1rem; }
+            .h-4 { height: 1rem; }
+            .w-6 { width: 1.5rem; }
+            .h-6 { height: 1.5rem; }
+            .w-8 { width: 2rem; }
+            .h-8 { height: 2rem; }
+            .w-10 { width: 2.5rem; }
+            .h-10 { height: 2.5rem; }
+            .w-12 { width: 3rem; }
+            .h-12 { height: 3rem; }
+            
+            /* Positioning */
+            .-top-1 { top: -0.25rem; }
+            .-right-1 { right: -0.25rem; }
+            
+            /* Dark mode support (for avatar fallbacks) */
+            @media (prefers-color-scheme: dark) {
+              .dark\\:bg-green-950 { background-color: rgb(5, 46, 22); }
+              .dark\\:text-green-300 { color: rgb(134, 239, 172); }
+              .dark\\:bg-red-950 { background-color: rgb(69, 10, 10); }
+              .dark\\:text-red-300 { color: rgb(252, 165, 165); }
+              .dark\\:border-green-800 { border-color: rgb(22, 101, 52); }
+            }
+          `;
+          clonedDoc.head.appendChild(style);
+        }
+      });
+      
+      console.log('✅ Canvas generated successfully:', canvas.width, 'x', canvas.height);
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.download = `poker-game-${game.date}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      console.log('🎉 Image download initiated successfully!');
+      
+    } catch (error) {
+      console.error('❌ Image generation failed:', error);
+      console.log('🔄 Falling back to text download...');
+      
+      // Fallback to text download
+      const element = document.createElement('a');
+      const file = new Blob([`Poker Game Results\n\nDate: ${formatDate(game.date)}\n\n` + 
+        game.players.map(p => {
+          const net = getNetResult(p);
+          return `${p.name}: ${net >= 0 ? '+$' : '-$'}${Math.abs(net).toFixed(2)}`;
+        }).join('\n')], {type: 'text/plain'});
+      element.href = URL.createObjectURL(file);
+      element.download = `poker-game-${game.date}.txt`;
+      element.click();
+      console.log('📄 Text fallback download completed');
+    }
+  };
+
   const getTotalInvested = (player: Player) => {
     // Return the full amount paid by the player (including host fee)
-    return game.buyInAmount + player.rebuys;
+    return game.buyInAmount + game.hostFee + player.rebuys;
   };
 
   const getNetResult = (player: Player) => {
@@ -133,12 +329,22 @@ export function PastGameDetails({ game, onBack }: PastGameDetailsProps) {
               {formatDate(game.date)}
             </p>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={downloadResults}
+            className="p-2 rounded-full"
+          >
+            <Download className="w-5 h-5" />
+          </Button>
         </div>
       </div>
 
-      {/* Game Overview */}
-      <div className="p-6 pb-4 space-y-4">
-        <Card className="p-4 border border-border/50 rounded-xl bg-muted/20">
+      {/* Printable Content */}
+      <div ref={printableContentRef} className="bg-white">
+        {/* Game Overview */}
+        <div className="p-6 pb-4 space-y-4">
+          <Card className="p-4 border border-border/50 rounded-xl bg-muted/20">
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <div>
@@ -177,20 +383,27 @@ export function PastGameDetails({ game, onBack }: PastGameDetailsProps) {
         <Card className="p-4 border border-border/50 rounded-xl">
           <div className="space-y-3">
             <h3 className="text-sm font-medium">Game Settings</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-muted-foreground" />
-                <div>
+            <div className="flex justify-between items-start">
+              <div className="text-center flex-1">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <DollarSign className="w-4 h-4 text-muted-foreground" />
                   <p className="text-xs text-muted-foreground">Buy-in</p>
-                  <p className="text-sm font-medium">${game.buyInAmount}</p>
                 </div>
+                <p className="text-sm font-medium">${game.buyInAmount}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-muted-foreground" />
-                <div>
+              <div className="text-center flex-1">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <Users className="w-4 h-4 text-muted-foreground" />
                   <p className="text-xs text-muted-foreground">Host Fee</p>
-                  <p className="text-sm font-medium">${game.hostFee}</p>
                 </div>
+                <p className="text-sm font-medium">${game.hostFee}</p>
+              </div>
+              <div className="text-center flex-1">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  <RefreshCw className="w-4 h-4 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">Rebuy</p>
+                </div>
+                <p className="text-sm font-medium">${game.defaultRebuyAmount}</p>
               </div>
             </div>
           </div>
@@ -357,6 +570,7 @@ export function PastGameDetails({ game, onBack }: PastGameDetailsProps) {
           </Card>
         </div>
       )}
+      </div>
     </div>
   );
 }

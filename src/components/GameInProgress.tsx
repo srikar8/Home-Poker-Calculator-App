@@ -95,7 +95,7 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
       const newPlayer = {
         id: Date.now().toString(),
         name: newPlayerName.trim(),
-        buyIn: game.buyInAmount - game.hostFee, // Buy-in minus host fee (amount that goes to pot)
+        buyIn: game.buyInAmount, // Full buy-in amount goes to pot
         rebuys: 0,
         cashOut: 0
       };
@@ -116,7 +116,7 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
   };
 
   const getTotalPot = () => {
-    return game.players.reduce((sum, player) => sum + getTotalInvested(player), 0);
+    return game.players.reduce((sum, player) => sum + (player.buyIn + player.rebuys), 0);
   };
 
   const getTotalHostFees = () => {
@@ -225,11 +225,11 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
                     <div className="p-3 bg-muted/50 rounded-lg">
                       <div className="flex justify-between items-center">
                         <div>
-                          <p className="text-sm font-medium">${game.buyInAmount}</p>
+                          <p className="text-sm font-medium">${game.buyInAmount + game.hostFee}</p>
                           <p className="text-xs text-muted-foreground">Total amount to pay</p>
                         </div>
                         <div className="text-right text-xs text-muted-foreground">
-                          <p>To pot: ${game.buyInAmount - game.hostFee}</p>
+                          <p>To pot: ${game.buyInAmount}</p>
                           <p>Host fee: ${game.hostFee}</p>
                         </div>
                       </div>
