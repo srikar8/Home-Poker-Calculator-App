@@ -3,6 +3,7 @@ import { Card } from './ui/card';
 import { Plus, Play, Clock, DollarSign, Users, ChevronDown, ChevronRight, Spade, Calendar, Heart, Diamond, Club, Sparkles } from 'lucide-react';
 import { Game } from '../App';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import { Badge } from './ui/badge';
 
 interface HomeScreenProps {
   pastGames: Game[];
@@ -14,6 +15,11 @@ interface HomeScreenProps {
 
 export function HomeScreen({ pastGames, currentGame, onStartNewGame, onViewPastGame, onResumeGame }: HomeScreenProps) {
   const [isRecentGamesOpen, setIsRecentGamesOpen] = useState(true);
+  
+  // Helper function to identify demo/sample games
+  const isDemoGame = (game: Game) => {
+    return game.id === '1' || game.id === '2';
+  };
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -221,18 +227,34 @@ export function HomeScreen({ pastGames, currentGame, onStartNewGame, onViewPastG
                 pastGames.map((game, index) => (
                   <Card 
                     key={game.id} 
-                    className="p-6 border-0 bg-gradient-to-r from-gray-50 to-slate-100 dark:from-gray-950/50 dark:to-slate-900/50 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-[1.02] border-l-4 border-l-gray-500"
-                    onClick={() => onViewPastGame(game)}
+                    className={`p-6 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] border-l-4 relative group ${
+                      isDemoGame(game) 
+                        ? 'bg-gradient-to-r from-orange-50/50 to-amber-50/50 dark:from-orange-950/20 dark:to-amber-950/20 border-l-orange-400' 
+                        : 'bg-gradient-to-r from-gray-50 to-slate-100 dark:from-gray-950/50 dark:to-slate-900/50 border-l-gray-500'
+                    }`}
                     style={{ 
                       animationDelay: isRecentGamesOpen ? `${index * 50}ms` : '0ms'
                     }}
                   >
+                    {/* Demo/Sample Badge */}
+                    {isDemoGame(game) && (
+                      <Badge 
+                        variant="secondary" 
+                        className="absolute top-2 right-2 bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 text-xs font-medium"
+                      >
+                        Demo
+                      </Badge>
+                    )}
+                    
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
+                      <div 
+                        className="flex items-center gap-4 flex-1 cursor-pointer"
+                        onClick={() => onViewPastGame(game)}
+                      >
                         <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-xl flex items-center justify-center shadow-md">
                           <Calendar className="w-6 h-6 text-gray-700 dark:text-gray-200" />
                         </div>
-                        <div>
+                        <div className="flex-1">
                           <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
                             {formatDate(game.date)}
                           </h3>
@@ -248,6 +270,8 @@ export function HomeScreen({ pastGames, currentGame, onStartNewGame, onViewPastG
                           </div>
                         </div>
                       </div>
+                      
+
                     </div>
                   </Card>
                 ))

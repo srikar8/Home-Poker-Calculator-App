@@ -3,12 +3,24 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
-import { ArrowLeft, TrendingUp, TrendingDown, Calculator, Trophy, DollarSign, Users, Calendar, ArrowRight, RefreshCw, Download } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Calculator, Trophy, DollarSign, Users, Calendar, ArrowRight, RefreshCw, Download, Trash2, X } from 'lucide-react';
 import { Game, Player } from '../App';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from './ui/alert-dialog';
 
 interface PastGameDetailsProps {
   game: Game;
   onBack: () => void;
+  onDeleteGame: (gameId: string) => void;
 }
 
 interface Transaction {
@@ -17,11 +29,16 @@ interface Transaction {
   amount: number;
 }
 
-export function PastGameDetails({ game, onBack }: PastGameDetailsProps) {
+export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsProps) {
   const printableContentRef = useRef<HTMLDivElement>(null);
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  // Helper function to identify demo/sample games
+  const isDemoGame = (game: Game) => {
+    return game.id === '1' || game.id === '2';
   };
 
   const downloadResults = async () => {
@@ -328,6 +345,11 @@ export function PastGameDetails({ game, onBack }: PastGameDetailsProps) {
             <p className="text-sm text-muted-foreground">
               {formatDate(game.date)}
             </p>
+            {isDemoGame(game) && (
+              <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                Demo game - cannot be deleted
+              </p>
+            )}
           </div>
           <Button
             variant="ghost"
@@ -337,6 +359,38 @@ export function PastGameDetails({ game, onBack }: PastGameDetailsProps) {
           >
             <Download className="w-5 h-5" />
           </Button>
+          
+          {/* Only show delete button for non-demo games */}
+          {!isDemoGame(game) && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="p-2 rounded-full text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Game</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete this game? This action cannot be undone and will permanently remove the game from your history.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <Button 
+                    onClick={() => onDeleteGame(game.id)}
+                    variant="destructive"
+                  >
+                    Delete Game
+                  </Button>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       </div>
 

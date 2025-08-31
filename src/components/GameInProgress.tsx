@@ -32,6 +32,8 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
   const [isRebuyHistoryOpen, setIsRebuyHistoryOpen] = useState(true);
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
   const [isLeaveConfirmationOpen, setIsLeaveConfirmationOpen] = useState(false);
+  const [isRemovePlayerDialogOpen, setIsRemovePlayerDialogOpen] = useState(false);
+  const [playerToRemove, setPlayerToRemove] = useState<Player | null>(null);
   const [newPlayerName, setNewPlayerName] = useState('');
 
   const getInitials = (name: string) => {
@@ -108,6 +110,27 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
       onUpdateGame(updatedGame);
       setNewPlayerName('');
       setIsAddPlayerDialogOpen(false);
+    }
+  };
+
+  const removePlayer = (player: Player) => {
+    setPlayerToRemove(player);
+    setIsRemovePlayerDialogOpen(true);
+  };
+
+  const confirmRemovePlayer = () => {
+    if (playerToRemove) {
+      // Remove the player from the game
+      const updatedGame = {
+        ...game,
+        players: game.players.filter(p => p.id !== playerToRemove.id),
+        // Also remove any rebuy transactions for this player
+        rebuyHistory: game.rebuyHistory.filter(r => r.playerId !== playerToRemove.id)
+      };
+      
+      onUpdateGame(updatedGame);
+      setPlayerToRemove(null);
+      setIsRemovePlayerDialogOpen(false);
     }
   };
 
@@ -343,7 +366,14 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
                       </Avatar>
                       
                       <div className="flex-1">
-                        <h3 className="text-sm font-medium">{player.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-medium">{player.name}</h3>
+                          {player.id === game.hostId && (
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full dark:bg-green-900/30 dark:text-green-300">
+                              Host
+                            </span>
+                          )}
+                        </div>
                         <div className="flex flex-col gap-1 mt-1">
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <span>Buy-in: ${player.buyIn}</span>
@@ -354,6 +384,20 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
                           </div>
                         </div>
                       </div>
+                      
+                      {game.players.length > 2 && player.id !== game.hostId && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removePlayer(player);
+                          }}
+                          className="p-2 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </Card>
                 ))}
@@ -465,6 +509,48 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
               Save & Leave
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove Player Confirmation Dialog */}
+      <Dialog open={isRemovePlayerDialogOpen} onOpenChange={setIsRemovePlayerDialogOpen}>
+        <DialogContent className="max-w-sm rounded-xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Remove Player</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {playerToRemove && (
+              <>
+                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                      {getInitials(playerToRemove.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium">{playerToRemove.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Total invested: ${getTotalInvested(playerToRemove)}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="p-3 bg-red-50/50 rounded-lg">
+                  <p className="text-sm text-red-700">
+                    <strong>Warning:</strong> This will permanently remove {playerToRemove.name} from the game and delete all their rebuy history. This action cannot be undone.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="mt-6 pt-4 border-t border-border/30">
+            <Button
+              onClick={confirmRemovePlayer}
+              className="w-full h-10 !bg-red-600 hover:!bg-red-700 text-white font-medium border-red-600"
+            >
+              Remove Player
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
