@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
-import { ArrowLeft, TrendingUp, TrendingDown, Calculator, Trophy, DollarSign, Users, Calendar, ArrowRight, RefreshCw, Download, Trash2, X } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, Calculator, Trophy, DollarSign, Users, Calendar, ArrowRight, RefreshCw, Download, Trash2, X, Share } from 'lucide-react';
 import { Game, Player } from '../App';
 import {
   AlertDialog,
@@ -235,6 +235,41 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
     }
   };
 
+  const shareResults = () => {
+    const totalAmount = getTotalPot() + getTotalHostFees();
+    const gamePot = getTotalPot();
+    const hostFees = getTotalHostFees();
+    
+    let summary = `Poker Game Results\n\n` +
+      `Date: ${formatDate(game.date)}\n` +
+      `Total Amount: $${totalAmount}\n` +
+      `Game Pot: $${gamePot}\n` +
+      `Host Fees: $${hostFees}\n` +
+      `Players: ${game.players.length}\n\n` +
+      `Results:\n` +
+      game.players.map(p => {
+        const net = getNetResult(p);
+        return `${p.name}: ${net >= 0 ? '+' : ''}$${net.toFixed(2)}`;
+      }).join('\n');
+    
+    if (simplifiedTransactions.length > 0) {
+      summary += `\n\nSettlements:\n` +
+        simplifiedTransactions.map(t => 
+          `${t.from.name} pays ${t.to.name} $${t.amount.toFixed(2)}`
+        ).join('\n');
+    }
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'Poker Game Results',
+        text: summary
+      });
+    } else {
+      navigator.clipboard.writeText(summary);
+      // Could show a toast here
+    }
+  };
+
   const getTotalInvested = (player: Player) => {
     // Return the full amount paid by the player (including host fee)
     return game.buyInAmount + game.hostFee + player.rebuys;
@@ -351,6 +386,14 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
               </p>
             )}
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={shareResults}
+            className="p-2 rounded-full"
+          >
+            <Share className="w-5 h-5" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"

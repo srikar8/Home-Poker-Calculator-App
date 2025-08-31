@@ -29,7 +29,7 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
 
   // Initialize cash out values with 0 for all players
   React.useEffect(() => {
-    if (game.players.length > 0 && Object.keys(cashOutValues).length === 0) {
+    if (game.players.length > 0) {
       const initialValues: { [playerId: string]: string } = {};
       
       // Check if players already have cashOut values from the game object
@@ -49,7 +49,7 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
       
       setCashOutValues(initialValues);
     }
-  }, [game.players, cashOutValues]);
+  }, [game.players]);
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -88,6 +88,17 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
     };
     
     setCashOutValues(newValues);
+    
+    // Also update the game object to persist the values
+    const updatedGame = {
+      ...game,
+      players: game.players.map(player => 
+        player.id === playerId 
+          ? { ...player, cashOut: parseFloat(value) || 0 }
+          : player
+      )
+    };
+    onUpdateGame(updatedGame);
   };
 
   const openCashOutDialog = (player: Player) => {
