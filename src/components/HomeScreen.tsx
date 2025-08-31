@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card } from './ui/card';
-import { Plus, Play, Clock, DollarSign, Users, ChevronDown, ChevronRight, Spade, Calendar, Heart, Diamond, Club, Sparkles } from 'lucide-react';
+import { Plus, Play, Clock, DollarSign, Users, ChevronDown, ChevronRight, Spade, Calendar, Heart, Diamond, Club, Sparkles, BarChart3 } from 'lucide-react';
 import { Game } from '../App';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Badge } from './ui/badge';
@@ -11,10 +11,11 @@ interface HomeScreenProps {
   onStartNewGame: () => void;
   onViewPastGame: (game: Game) => void;
   onResumeGame: () => void;
+  onViewStats: () => void;
 }
 
-export function HomeScreen({ pastGames, currentGame, onStartNewGame, onViewPastGame, onResumeGame }: HomeScreenProps) {
-  const [isRecentGamesOpen, setIsRecentGamesOpen] = useState(true);
+export function HomeScreen({ pastGames, currentGame, onStartNewGame, onViewPastGame, onResumeGame, onViewStats }: HomeScreenProps) {
+  const [isRecentGamesOpen, setIsRecentGamesOpen] = useState(false);
   
   // Helper function to identify demo/sample games
   const isDemoGame = (game: Game) => {
@@ -34,6 +35,8 @@ export function HomeScreen({ pastGames, currentGame, onStartNewGame, onViewPastG
     if (!currentGame) return 0;
     return currentGame.players.reduce((sum, player) => sum + (player.buyIn + player.rebuys), 0);
   };
+
+
 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-b from-background to-muted/20">
@@ -173,6 +176,44 @@ export function HomeScreen({ pastGames, currentGame, onStartNewGame, onViewPastG
           </div>
         </Card>
 
+        {/* View Stats Card */}
+        <Card 
+          className="p-6 border-0 bg-gradient-to-br from-cyan-50 via-blue-50 to-sky-100 dark:from-cyan-950/40 dark:via-blue-950/40 dark:to-sky-900/40 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:scale-[1.03] hover:-translate-y-1 border-l-4 border-l-cyan-500 hover:border-l-cyan-400"
+          onClick={onViewStats}
+          style={{
+            background: 'linear-gradient(135deg, #ecfeff 0%, #cffafe 25%, #a5f3fc 50%, #67e8f9 75%, #06b6d4 100%)',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.03) translateY(-4px)';
+            e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 20px -5px rgba(0, 0, 0, 0.1)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #cffafe 0%, #a5f3fc 25%, #67e8f9 50%, #06b6d4 75%, #0891b2 100%)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1) translateY(0)';
+            e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #ecfeff 0%, #cffafe 25%, #a5f3fc 50%, #67e8f9 75%, #06b6d4 100%)';
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <div 
+              className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg"
+              style={{
+                background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%)',
+                boxShadow: '0 10px 15px -3px rgba(6, 182, 212, 0.3), 0 4px 6px -2px rgba(6, 182, 212, 0.2)'
+              }}
+            >
+              <BarChart3 className="w-6 h-6 text-white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-cyan-900 dark:text-cyan-100 mb-1 text-lg">View Player Stats</h3>
+              <p className="text-sm text-cyan-700 dark:text-cyan-300">Detailed analytics and player insights</p>
+            </div>
+            <div className="w-3 h-3 bg-cyan-400 rounded-full animate-pulse" style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
+          </div>
+        </Card>
+
         {/* Recent Games Section */}
         <Collapsible open={isRecentGamesOpen} onOpenChange={setIsRecentGamesOpen}>
           <CollapsibleTrigger asChild>
@@ -208,7 +249,7 @@ export function HomeScreen({ pastGames, currentGame, onStartNewGame, onViewPastG
                   <div>
                     <h3 className="font-bold text-purple-900 dark:text-purple-100 mb-1 text-lg">Recent Games</h3>
                     <p className="text-sm text-purple-700 dark:text-purple-300">
-                      {pastGames.length} game{pastGames.length !== 1 ? 's' : ''}
+                      {pastGames.filter(game => !isDemoGame(game)).length} game{pastGames.filter(game => !isDemoGame(game)).length !== 1 ? 's' : ''}
                     </p>
                   </div>
                 </div>

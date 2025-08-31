@@ -14,11 +14,71 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog';
+import { Game } from '../App';
 
 interface NewGameSetupProps {
   onBack: () => void;
   onStartGame: (players: { id: string; name: string; avatar?: string }[], buyInAmount: number, hostFee: number, defaultRebuyAmount: number, hostId: string) => void;
 }
+
+// Utility function to extract unique players from past games, excluding demo games
+const getUniquePlayersFromPastGames = (): { id: string; name: string; avatar?: string }[] => {
+  try {
+    const savedPastGames = localStorage.getItem('pastGames');
+    if (!savedPastGames) return [];
+    
+    const pastGames: Game[] = JSON.parse(savedPastGames);
+    
+    // Filter out demo games (games with id '1' or '2')
+    const nonDemoGames = pastGames.filter(game => game.id !== '1' && game.id !== '2');
+    
+    // Extract all players from non-demo games
+    const allPlayers = nonDemoGames.flatMap(game => 
+      game.players.map(player => ({
+        id: player.id,
+        name: player.name,
+        avatar: player.avatar
+      }))
+    );
+    
+    // Remove duplicates based on player name (case-insensitive)
+    const uniquePlayers = allPlayers.filter((player, index, self) => 
+      index === self.findIndex(p => p.name.toLowerCase() === player.name.toLowerCase())
+    );
+    
+    return uniquePlayers;
+  } catch (error) {
+    console.error('Error loading players from past games:', error);
+    return [];
+  }
+};
+
+// Utility function to get the most recent game's settings
+const getMostRecentGameSettings = (): { buyInAmount: number; hostFee: number; defaultRebuyAmount: number } | null => {
+  try {
+    const savedPastGames = localStorage.getItem('pastGames');
+    if (!savedPastGames) return null;
+    
+    const pastGames: Game[] = JSON.parse(savedPastGames);
+    
+    // Filter out demo games (games with id '1' or '2')
+    const nonDemoGames = pastGames.filter(game => game.id !== '1' && game.id !== '2');
+    
+    if (nonDemoGames.length === 0) return null;
+    
+    // Get the most recent game (first in the array since they're stored newest first)
+    const mostRecentGame = nonDemoGames[0];
+    
+    return {
+      buyInAmount: mostRecentGame.buyInAmount,
+      hostFee: mostRecentGame.hostFee,
+      defaultRebuyAmount: mostRecentGame.defaultRebuyAmount
+    };
+  } catch (error) {
+    console.error('Error loading settings from past games:', error);
+    return null;
+  }
+};
 
 export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
   const [players, setPlayers] = useState<{ id: string; name: string; avatar?: string }[]>([]);
@@ -30,6 +90,28 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
   const [isGameStakesDialogOpen, setIsGameStakesDialogOpen] = useState(false);
 
+  const [autoPopulated, setAutoPopulated] = useState(false);
+
+  // Auto-populate players and game settings from past games on component mount
+  useEffect(() => {
+    const pastPlayers = getUniquePlayersFromPastGames();
+    const recentSettings = getMostRecentGameSettings();
+    
+    if (pastPlayers.length > 0) {
+      setPlayers(pastPlayers);
+      // Set the first player as host by default
+      setSelectedHostId(pastPlayers[0].id);
+      setAutoPopulated(true);
+    }
+    
+    // Auto-populate game settings from the most recent game
+    if (recentSettings) {
+      setBuyInAmount(recentSettings.buyInAmount.toString());
+      setHostFee(recentSettings.hostFee.toString());
+      setDefaultRebuyAmount(recentSettings.defaultRebuyAmount.toString());
+    }
+  }, []);
+
   const addPlayer = () => {
     if (newPlayerName.trim()) {
       const newPlayer = {
@@ -40,8 +122,8 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
       const updatedPlayers = [...players, newPlayer];
       setPlayers(updatedPlayers);
       
-      // Set the first player as host by default
-      if (updatedPlayers.length === 1) {
+      // Set the first player as host by default only if no host is currently selected
+      if (updatedPlayers.length === 1 || selectedHostId === '') {
         setSelectedHostId(newPlayer.id);
       }
       
@@ -254,6 +336,11 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
                 <div className="flex items-center gap-2 mb-2">
                   <Users className="w-4 h-4 text-muted-foreground" />
                   <h3 className="text-sm font-medium">Select Host</h3>
+                  {autoPopulated && (
+                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                      Auto-filled from past games
+                    </Badge>
+                  )}
                 </div>
                 {players.map((player) => (
                   <div key={player.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/20">
@@ -293,6 +380,15 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
             </Card>
           )}
 
+
+          {/* Auto-populated message */}
+          {autoPopulated && players.length > 0 && (
+            <div className="text-center py-2">
+              <p className="text-sm text-blue-600 dark:text-blue-400">
+                Players and game settings from your most recent game have been automatically loaded. You can modify them as needed.
+              </p>
+            </div>
+          )}
 
           {/* Minimum players message */}
           {players.length === 1 && (

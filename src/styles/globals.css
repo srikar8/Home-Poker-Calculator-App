@@ -358,3 +358,57 @@ html {
   font-weight: 600;
   margin: 0;
 }
+
+/* Ensure SVG icons are visible */
+svg {
+  color: inherit !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  display: inline-block !important;
+}
+
+/* Specific styling for Lucide React icons */
+[data-lucide] {
+  color: inherit !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  display: inline-block !important;
+}
+
+/* Ensure SVG icons respect Tailwind text color classes */
+.text-white svg,
+.text-white [data-lucide] {
+  color: white !important;
+  fill: white !important;
+  stroke: white !important;
+}
+
+.text-gray-700 svg,
+.text-gray-700 [data-lucide] {
+  color: rgb(55 65 81) !important;
+  fill: rgb(55 65 81) !important;
+  stroke: rgb(55 65 81) !important;
+}
+
+.dark .text-gray-300 svg,
+.dark .text-gray-300 [data-lucide] {
+  color: rgb(209 213 219) !important;
+  fill: rgb(209 213 219) !important;
+  stroke: rgb(209 213 219) !important;
+}
+
+/* Ensure icons with opacity classes have a default color */
+.opacity-50 svg,
+.opacity-50 [data-lucide] {
+  color: currentColor !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+/* Ensure muted foreground text works with SVG icons */
+.text-muted-foreground svg,
+.text-muted-foreground [data-lucide] {
+  color: var(--muted-foreground) !important;
+  fill: var(--muted-foreground) !important;
+  stroke: var(--muted-foreground) !important;
+}

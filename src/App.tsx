@@ -7,8 +7,9 @@ import { CashOutScreen } from './components/CashOutScreen';
 import { GameSummary } from './components/GameSummary';
 import { SettlementScreen } from './components/SettlementScreen';
 import { PastGameDetails } from './components/PastGameDetails';
+import { PlayerStats } from './components/PlayerStats';
 
-export type Screen = 'home' | 'newGame' | 'gameInProgress' | 'cashOut' | 'summary' | 'settlement' | 'pastGameDetails';
+export type Screen = 'home' | 'newGame' | 'gameInProgress' | 'cashOut' | 'summary' | 'settlement' | 'pastGameDetails' | 'playerStats';
 
 export interface Player {
   id: string;
@@ -198,6 +199,7 @@ export default function App() {
             onStartNewGame={() => navigateToScreen('newGame')}
             onViewPastGame={(game) => navigateToScreen('pastGameDetails', game)}
             onResumeGame={resumeGame}
+            onViewStats={() => navigateToScreen('playerStats')}
           />
         )}
         
@@ -259,6 +261,13 @@ export default function App() {
               setCurrentGame(null);
               navigateToScreen('home');
             }}
+          />
+        )}
+        
+        {currentScreen === 'playerStats' && (
+          <PlayerStats
+            pastGames={pastGames}
+            onBack={() => navigateToScreen('home')}
           />
         )}
       </div>
