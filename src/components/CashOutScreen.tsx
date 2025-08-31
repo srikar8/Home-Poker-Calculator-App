@@ -27,11 +27,10 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [tempCashOutValue, setTempCashOutValue] = useState('');
 
-  // Initialize cash out values with 0, host gets total stakes
+  // Initialize cash out values with 0 for all players
   React.useEffect(() => {
     if (game.players.length > 0 && Object.keys(cashOutValues).length === 0) {
       const initialValues: { [playerId: string]: string } = {};
-      const totalPot = getTotalPot();
       
       // Check if players already have cashOut values from the game object
       const hasExistingCashOut = game.players.some(player => player.cashOut > 0);
@@ -42,15 +41,9 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
           initialValues[player.id] = player.cashOut.toString();
         });
       } else {
-        // Set default values: host gets total stakes, others get 0
+        // Set default values: all players start with 0
         game.players.forEach((player) => {
-          if (player.id === game.hostId) {
-            // Host gets the total stakes initially
-            initialValues[player.id] = totalPot.toString();
-          } else {
-            // Other players start with 0
-            initialValues[player.id] = '0';
-          }
+          initialValues[player.id] = '0';
         });
       }
       
@@ -94,38 +87,11 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
       [playerId]: value
     };
     
-    // Auto-calculate the host's cashout
-    const updatedValues = autoCalculateHost(newValues);
-    setCashOutValues(updatedValues);
-  };
-
-  const autoCalculateHost = (values: { [playerId: string]: string }) => {
-    const totalPot = getTotalPot();
-    const playerIds = game.players.map(p => p.id);
-    const hostId = game.hostId; // Use the actual hostId from the game
-    
-    // Calculate total cashout excluding the host
-    const totalExcludingHost = playerIds.filter(id => id !== hostId).reduce((sum, playerId) => {
-      return sum + (parseFloat(values[playerId]) || 0);
-    }, 0);
-    
-    // Calculate what the host should get
-    const hostAmount = Math.max(0, totalPot - totalExcludingHost);
-    
-    return {
-      ...values,
-      [hostId]: hostAmount.toFixed(2)
-    };
+    setCashOutValues(newValues);
   };
 
   const openCashOutDialog = (player: Player) => {
     console.log('Opening dialog for player:', player.name);
-    const isHost = player.id === game.hostId;
-    
-    if (isHost) {
-      // Don't allow editing the host as it's auto-calculated
-      return;
-    }
     
     setSelectedPlayer(player);
     setTempCashOutValue(cashOutValues[player.id] || '');
@@ -256,16 +222,11 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
             const isProfit = netResult > 0;
             const isComplete = cashOutValues[player.id] && parseFloat(cashOutValues[player.id]) > 0;
             const isHost = player.id === game.hostId; // Use the actual hostId from the game
-            const isAutoCalculated = isHost; // Host gets auto-calculated
             
             return (
               <Card 
                 key={player.id} 
-                className={`p-4 border border-border/50 rounded-xl transition-colors ${
-                  isAutoCalculated 
-                    ? 'bg-muted/10 cursor-not-allowed' 
-                    : 'hover:bg-muted/20 cursor-pointer'
-                }`}
+                className="p-4 border border-border/50 rounded-xl transition-colors hover:bg-muted/20 cursor-pointer"
                 onClick={() => openCashOutDialog(player)}
               >
                 <div className="space-y-3">
@@ -284,6 +245,11 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
                             Host
                           </span>
                         )}
+                        {player.id === game.coHostId && (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full dark:bg-green-900/30 dark:text-green-300">
+                            Co-host
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground">
                         Total buyin: ${getTotalBuyIn(player)}
@@ -294,13 +260,8 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
                         ${cashOutValues[player.id] || '0'}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {isAutoCalculated ? 'Auto-calculated' : 'Cash Out'}
+                        Cash Out
                       </p>
-                      {isAutoCalculated && (
-                        <p className="text-xs text-blue-600 font-medium">
-                          Balance
-                        </p>
-                      )}
                     </div>
                   </div>
 

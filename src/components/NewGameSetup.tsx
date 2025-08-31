@@ -14,11 +14,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 import { Game } from '../App';
 
 interface NewGameSetupProps {
   onBack: () => void;
-  onStartGame: (players: { id: string; name: string; avatar?: string }[], buyInAmount: number, hostFee: number, defaultRebuyAmount: number, hostId: string) => void;
+  onStartGame: (players: { id: string; name: string; avatar?: string }[], buyInAmount: number, hostFee: number, defaultRebuyAmount: number, hostId: string, coHostId?: string) => void;
 }
 
 // Utility function to extract unique players from past games, excluding demo games
@@ -51,6 +58,18 @@ const getUniquePlayersFromPastGames = (): { id: string; name: string; avatar?: s
     console.error('Error loading players from past games:', error);
     return [];
   }
+};
+
+// Utility function to get available players from past games (excluding those already in current game)
+const getAvailablePastPlayers = (currentPlayers: { id: string; name: string; avatar?: string }[]): { id: string; name: string; avatar?: string }[] => {
+  const allPastPlayers = getUniquePlayersFromPastGames();
+  
+  // Filter out players who are already in the current game
+  return allPastPlayers.filter(pastPlayer => 
+    !currentPlayers.some(currentPlayer => 
+      currentPlayer.name.toLowerCase() === pastPlayer.name.toLowerCase()
+    )
+  );
 };
 
 // Utility function to get the most recent game's settings
@@ -87,8 +106,10 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
   const [hostFee, setHostFee] = useState('5');
   const [defaultRebuyAmount, setDefaultRebuyAmount] = useState('50');
   const [selectedHostId, setSelectedHostId] = useState<string>('');
+  const [selectedCoHostId, setSelectedCoHostId] = useState<string | undefined>(undefined);
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
   const [isGameStakesDialogOpen, setIsGameStakesDialogOpen] = useState(false);
+  const [selectedPastPlayerId, setSelectedPastPlayerId] = useState<string>('');
 
   const [autoPopulated, setAutoPopulated] = useState(false);
 
@@ -113,21 +134,37 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
   }, []);
 
   const addPlayer = () => {
-    if (newPlayerName.trim()) {
-      const newPlayer = {
+    let playerToAdd: { id: string; name: string; avatar?: string } | null = null;
+
+    // Check if a past player is selected
+    if (selectedPastPlayerId) {
+      const availablePastPlayers = getAvailablePastPlayers(players);
+      const selectedPastPlayer = availablePastPlayers.find(p => p.id === selectedPastPlayerId);
+      if (selectedPastPlayer) {
+        playerToAdd = selectedPastPlayer;
+      }
+    }
+    // Check if a new player name is entered
+    else if (newPlayerName.trim()) {
+      playerToAdd = {
         id: Date.now().toString(),
         name: newPlayerName.trim(),
         avatar: undefined
       };
-      const updatedPlayers = [...players, newPlayer];
+    }
+
+    if (playerToAdd) {
+      const updatedPlayers = [...players, playerToAdd];
       setPlayers(updatedPlayers);
       
       // Set the first player as host by default only if no host is currently selected
       if (updatedPlayers.length === 1 || selectedHostId === '') {
-        setSelectedHostId(newPlayer.id);
+        setSelectedHostId(playerToAdd.id);
       }
       
+      // Reset form
       setNewPlayerName('');
+      setSelectedPastPlayerId('');
       setIsAddPlayerDialogOpen(false);
     }
   };
@@ -142,6 +179,11 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
     } else if (updatedPlayers.length === 0) {
       setSelectedHostId('');
     }
+    
+    // If the removed player was the co-host, clear the co-host selection
+    if (playerId === selectedCoHostId) {
+      setSelectedCoHostId(undefined);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -149,6 +191,11 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
   };
 
   const canStartGame = players.length >= 2 && selectedHostId !== '' && parseFloat(buyInAmount) > 0 && parseFloat(hostFee) >= 0;
+
+  const resetAddPlayerForm = () => {
+    setNewPlayerName('');
+    setSelectedPastPlayerId('');
+  };
 
   const getTotalPlayerCost = () => {
     const buyIn = parseFloat(buyInAmount) || 0;
@@ -293,7 +340,15 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
           </Card>
 
                      {/* Add Player Dialog */}
-           <Dialog open={isAddPlayerDialogOpen} onOpenChange={setIsAddPlayerDialogOpen}>
+           <Dialog 
+             open={isAddPlayerDialogOpen} 
+             onOpenChange={(open) => {
+               setIsAddPlayerDialogOpen(open);
+               if (!open) {
+                 resetAddPlayerForm();
+               }
+             }}
+           >
              <DialogTrigger asChild>
                <Button 
                  className="w-full h-12 text-base rounded-xl"
@@ -302,25 +357,80 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
                  Add Player
                </Button>
              </DialogTrigger>
-             <DialogContent className="max-w-sm rounded-xl">
+                           <DialogContent className="max-w-sm rounded-xl">
                <DialogHeader>
-                 <DialogTitle>Add New Player</DialogTitle>
+                 <DialogTitle>Add Player</DialogTitle>
                </DialogHeader>
                <div className="space-y-4">
+                 {/* Option 1: Add New Player */}
                  <div className="space-y-2">
-                   <label className="text-sm font-medium">Player Name</label>
+                   <Label className="text-sm font-medium">Add New Player</Label>
                    <Input
-                     placeholder="Enter player name"
+                     placeholder="Enter new player name"
                      value={newPlayerName}
-                     onChange={(e) => setNewPlayerName(e.target.value)}
+                     onChange={(e) => {
+                       setNewPlayerName(e.target.value);
+                       // Clear past player selection when typing new name
+                       if (e.target.value.trim()) {
+                         setSelectedPastPlayerId('');
+                       }
+                     }}
                      onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
                      className="rounded-lg"
                    />
                  </div>
+
+                 {/* Divider */}
+                 <div className="relative">
+                   <div className="absolute inset-0 flex items-center">
+                     <span className="w-full border-t border-border/50" />
+                   </div>
+                   <div className="relative flex justify-center text-xs uppercase">
+                     <span className="bg-background px-2 text-muted-foreground">Or</span>
+                   </div>
+                 </div>
+
+                 {/* Option 2: Select from Past Players */}
+                 <div className="space-y-2">
+                   <Label className="text-sm font-medium">Add from Past Games</Label>
+                   <Select 
+                     value={selectedPastPlayerId} 
+                     onValueChange={(value) => {
+                       setSelectedPastPlayerId(value);
+                       // Clear new player name when selecting past player
+                       if (value) {
+                         setNewPlayerName('');
+                       }
+                     }}
+                   >
+                     <SelectTrigger className="rounded-lg">
+                       <SelectValue placeholder="Select a player from past games" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       {getAvailablePastPlayers(players).map((player) => (
+                         <SelectItem key={player.id} value={player.id}>
+                           <div className="flex items-center gap-2">
+                             <Avatar className="w-6 h-6">
+                               <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                 {getInitials(player.name)}
+                               </AvatarFallback>
+                             </Avatar>
+                             <span>{player.name}</span>
+                           </div>
+                         </SelectItem>
+                       ))}
+                       {getAvailablePastPlayers(players).length === 0 && (
+                         <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                           No past players available
+                         </div>
+                       )}
+                     </SelectContent>
+                   </Select>
+                 </div>
                  
                  <Button
                    onClick={addPlayer}
-                   disabled={!newPlayerName.trim()}
+                   disabled={!newPlayerName.trim() && !selectedPastPlayerId}
                    className="w-full rounded-lg"
                  >
                    Add Player
@@ -379,7 +489,44 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
               </div>
             </Card>
           )}
-
+          {/* Co-host selection */}
+          {players.length > 0 && (
+            <Card className="p-4 border border-border/50 rounded-xl">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="w-4 h-4 text-muted-foreground" />
+                  <h3 className="text-sm font-medium">Co-host (Optional)</h3>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="co-host-select" className="text-xs text-muted-foreground">
+                    Select a co-host to help manage the game
+                  </Label>
+                  <Select value={selectedCoHostId || 'none'} onValueChange={(value) => setSelectedCoHostId(value === 'none' ? undefined : value)}>
+                    <SelectTrigger className="h-10 rounded-lg border-border/50">
+                      <SelectValue placeholder="No co-host selected" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No co-host</SelectItem>
+                      {players
+                        .filter(player => player.id !== selectedHostId) // Exclude the host from co-host options
+                        .map((player) => (
+                          <SelectItem key={player.id} value={player.id}>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="w-6 h-6">
+                                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                  {getInitials(player.name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span>{player.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </Card>
+          )}
 
           {/* Auto-populated message */}
           {autoPopulated && players.length > 0 && (
@@ -404,7 +551,7 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
       {/* Bottom Action - Fixed to screen bottom */}
       <div className="fixed bottom-0 left-0 right-0 p-6 border-t border-border/50 bg-background z-10" id="bottom-button">
         <Button
-          onClick={() => onStartGame(players, parseFloat(buyInAmount), parseFloat(hostFee), parseFloat(defaultRebuyAmount), selectedHostId)}
+          onClick={() => onStartGame(players, parseFloat(buyInAmount), parseFloat(hostFee), parseFloat(defaultRebuyAmount), selectedHostId, selectedCoHostId)}
           disabled={!canStartGame}
           className="w-full h-12 text-base rounded-xl"
         >

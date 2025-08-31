@@ -247,7 +247,7 @@ export function HomeScreen({ pastGames, currentGame, onStartNewGame, onViewPastG
                     <Clock className="w-6 h-6 text-white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-purple-900 dark:text-purple-100 mb-1 text-lg">Recent Games</h3>
+                    <h3 className="font-bold text-purple-900 dark:text-purple-100 mb-1 text-lg">Games Hosted</h3>
                     <p className="text-sm text-purple-700 dark:text-purple-300">
                       {pastGames.filter(game => !isDemoGame(game)).length} game{pastGames.filter(game => !isDemoGame(game)).length !== 1 ? 's' : ''}
                     </p>

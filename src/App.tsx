@@ -42,6 +42,7 @@ export interface Game {
   hostFee: number;
   defaultRebuyAmount: number;
   hostId: string;
+  coHostId?: string;
   rebuyHistory: RebuyTransaction[];
   settlementTransactions: SettlementTransaction[];
   totalPot: number;
@@ -82,6 +83,7 @@ export default function App() {
         hostFee: 5,
         defaultRebuyAmount: 50,
         hostId: '1',
+        coHostId: undefined,
         rebuyHistory: [
           { id: '1', playerId: '1', playerName: 'Alice', amount: 25, timestamp: '14:30' },
           { id: '2', playerId: '3', playerName: 'Charlie', amount: 25, timestamp: '15:45' }
@@ -104,6 +106,7 @@ export default function App() {
         hostFee: 5,
         defaultRebuyAmount: 50,
         hostId: '1',
+        coHostId: undefined,
         rebuyHistory: [
           { id: '1', playerId: '2', playerName: 'Bob', amount: 50, timestamp: '16:20' }
         ],
@@ -124,7 +127,7 @@ export default function App() {
     window.scrollTo(0, 0);
   };
 
-  const createNewGame = (players: Omit<Player, 'buyIn' | 'rebuys' | 'cashOut'>[], buyInAmount: number, hostFee: number, defaultRebuyAmount: number, hostId: string) => {
+  const createNewGame = (players: Omit<Player, 'buyIn' | 'rebuys' | 'cashOut'>[], buyInAmount: number, hostFee: number, defaultRebuyAmount: number, hostId: string, coHostId?: string) => {
     const newGame: Game = {
       id: Date.now().toString(),
       date: new Date().toISOString().split('T')[0],
@@ -138,6 +141,7 @@ export default function App() {
       hostFee,
       defaultRebuyAmount,
       hostId,
+      coHostId,
       rebuyHistory: [],
       settlementTransactions: [],
       totalPot: 0,

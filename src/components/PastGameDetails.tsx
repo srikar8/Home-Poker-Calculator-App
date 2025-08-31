@@ -510,7 +510,19 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
                 </div>
                 
                 <div className="flex-1">
-                  <h3 className="text-sm font-medium">{player.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-medium">{player.name}</h3>
+                    {player.id === game.hostId && (
+                      <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800/30">
+                        Host
+                      </Badge>
+                    )}
+                    {player.id === game.coHostId && (
+                      <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800/30">
+                        Co-host
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex items-center gap-3 mt-1">
                     <span className="text-xs text-muted-foreground">
                       In: ${totalInvested}
