@@ -6,15 +6,18 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collap
 import { Badge } from './ui/badge';
 
 interface HomeScreenProps {
+  user: any;
   pastGames: Game[];
   currentGame: Game | null;
   onStartNewGame: () => void;
   onViewPastGame: (game: Game) => void;
   onResumeGame: () => void;
   onViewStats: () => void;
+  onLogin: () => void;
+  onLogout: () => void;
 }
 
-export function HomeScreen({ pastGames, currentGame, onStartNewGame, onViewPastGame, onResumeGame, onViewStats }: HomeScreenProps) {
+export function HomeScreen({ user, pastGames, currentGame, onStartNewGame, onViewPastGame, onResumeGame, onViewStats, onLogin, onLogout }: HomeScreenProps) {
   const [isRecentGamesOpen, setIsRecentGamesOpen] = useState(false);
   
   // Helper function to identify demo/sample games
@@ -83,7 +86,9 @@ export function HomeScreen({ pastGames, currentGame, onStartNewGame, onViewPastG
           <h1 className="header-title">
             Pre Flop <span className="header-title-accent">ALL IN</span>
           </h1>
-          <p className="header-subtitle">Manage your poker nights</p>
+          <p className="header-subtitle">
+            {user ? `Welcome, ${user.name?.split(' ')[0] || 'User'}!` : 'Manage your poker nights'}
+          </p>
         </div>
       </div>
 
@@ -334,12 +339,27 @@ export function HomeScreen({ pastGames, currentGame, onStartNewGame, onViewPastG
 
       {/* Footer - Created by Srikar */}
       <div className="mt-auto pt-6 pb-4 px-6">
-        <div className="text-center">
+        <div className="text-center space-y-3">
           <p className="text-xs text-muted-foreground/60 font-medium flex items-center justify-center gap-1">
             <Sparkles className="w-3 h-3" />
             Created by Srikar | 2025
             <Sparkles className="w-3 h-3" />
           </p>
+          {user ? (
+            <button
+              onClick={onLogout}
+              className="text-xs text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium transition-colors"
+            >
+              Logout ({user.name?.split(' ')[0] || 'User'})
+            </button>
+          ) : (
+            <button
+              onClick={onLogin}
+              className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors"
+            >
+              Login / Signup
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Analytics } from "@vercel/analytics/react";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { HomeScreen } from './components/HomeScreen';
 import { NewGameSetup } from './components/NewGameSetup';
 import { GameInProgress } from './components/GameInProgress';
@@ -8,8 +9,15 @@ import { GameSummary } from './components/GameSummary';
 import { SettlementScreen } from './components/SettlementScreen';
 import { PastGameDetails } from './components/PastGameDetails';
 import { PlayerStats } from './components/PlayerStats';
+import { LoginDemo } from './components/LoginDemo';
 
-export type Screen = 'home' | 'newGame' | 'gameInProgress' | 'cashOut' | 'summary' | 'settlement' | 'pastGameDetails' | 'playerStats';
+export type Screen = 'home' | 'newGame' | 'gameInProgress' | 'cashOut' | 'summary' | 'settlement' | 'pastGameDetails' | 'playerStats' | 'login';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+}
 
 export interface Player {
   id: string;
@@ -51,6 +59,11 @@ export interface Game {
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
+  const [user, setUser] = useState<User | null>(() => {
+    // Load user from localStorage on app initialization
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [currentGame, setCurrentGame] = useState<Game | null>(() => {
     // Load current game from localStorage on app initialization
     const savedGame = localStorage.getItem('currentGame');
@@ -192,90 +205,115 @@ export default function App() {
     });
   };
 
+  const handleLogin = (userData: User) => {
+    setUser(userData);
+    // Save user to localStorage
+    localStorage.setItem('user', JSON.stringify(userData));
+    // Navigate back to home after successful login
+    navigateToScreen('home');
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    // Remove user from localStorage
+    localStorage.removeItem('user');
+    // Stay on the same home page instead of navigating to login
+    // navigateToScreen('login'); // Removed this line
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Mobile App Container */}
-      <div className="max-w-sm mx-auto min-h-screen bg-background border-x border-border relative">
-        {currentScreen === 'home' && (
-          <HomeScreen
-            pastGames={pastGames}
-            currentGame={currentGame}
-            onStartNewGame={() => navigateToScreen('newGame')}
-            onViewPastGame={(game) => navigateToScreen('pastGameDetails', game)}
-            onResumeGame={resumeGame}
-            onViewStats={() => navigateToScreen('playerStats')}
-          />
-        )}
-        
-        {currentScreen === 'newGame' && (
-          <NewGameSetup
-            onBack={() => navigateToScreen('home')}
-            onStartGame={createNewGame}
-          />
-        )}
-        
-        {currentScreen === 'gameInProgress' && currentGame && (
-          <GameInProgress
-            game={currentGame}
-            onBack={() => navigateToScreen('home')}
-            onUpdateGame={updateGame}
-            onEndGame={() => navigateToScreen('cashOut')}
-            onSaveAndLeave={saveGameToHome}
-          />
-        )}
-        
-        {currentScreen === 'cashOut' && currentGame && (
-          <CashOutScreen
-            game={currentGame}
-            onBack={() => navigateToScreen('gameInProgress')}
-            onUpdateGame={updateGame}
-            onViewSummary={() => navigateToScreen('summary')}
-          />
-        )}
-        
-        {currentScreen === 'summary' && currentGame && (
-          <GameSummary
-            game={currentGame}
-            onBack={() => navigateToScreen('cashOut')}
-            onSimplifyDebts={() => navigateToScreen('settlement')}
-            onUpdateGame={updateGame}
-          />
-        )}
-        
-        {currentScreen === 'settlement' && currentGame && (
-          <SettlementScreen
-            game={currentGame}
-            onBack={() => navigateToScreen('summary')}
-            onFinishGame={(gameWithSettlements) => {
-              finishGame(gameWithSettlements);
-              navigateToScreen('home');
-            }}
-          />
-        )}
-        
-        {currentScreen === 'pastGameDetails' && currentGame && (
-          <PastGameDetails
-            game={currentGame}
-            onBack={() => {
-              setCurrentGame(null);
-              navigateToScreen('home');
-            }}
-            onDeleteGame={(gameId) => {
-              removePastGame(gameId);
-              setCurrentGame(null);
-              navigateToScreen('home');
-            }}
-          />
-        )}
-        
-        {currentScreen === 'playerStats' && (
-          <PlayerStats
-            pastGames={pastGames}
-            onBack={() => navigateToScreen('home')}
-          />
-        )}
+    <GoogleOAuthProvider clientId="704930473706-ak626kpb4btplhpod3e0bv4v20sgqh9u.apps.googleusercontent.com">
+      <div className="min-h-screen bg-background">
+        {/* Mobile App Container */}
+        <div className="max-w-sm mx-auto min-h-screen bg-background border-x border-border relative">
+          {currentScreen === 'home' && (
+            <HomeScreen
+              user={user}
+              pastGames={pastGames}
+              currentGame={currentGame}
+              onStartNewGame={() => navigateToScreen('newGame')}
+              onViewPastGame={(game) => navigateToScreen('pastGameDetails', game)}
+              onResumeGame={resumeGame}
+              onViewStats={() => navigateToScreen('playerStats')}
+              onLogin={() => navigateToScreen('login')}
+              onLogout={handleLogout}
+            />
+          )}
+          
+          {currentScreen === 'newGame' && (
+            <NewGameSetup
+              onBack={() => navigateToScreen('home')}
+              onStartGame={createNewGame}
+            />
+          )}
+          
+          {currentScreen === 'gameInProgress' && currentGame && (
+            <GameInProgress
+              game={currentGame}
+              onBack={() => navigateToScreen('home')}
+              onUpdateGame={updateGame}
+              onEndGame={() => navigateToScreen('cashOut')}
+              onSaveAndLeave={saveGameToHome}
+            />
+          )}
+          
+          {currentScreen === 'cashOut' && currentGame && (
+            <CashOutScreen
+              game={currentGame}
+              onBack={() => navigateToScreen('gameInProgress')}
+              onUpdateGame={updateGame}
+              onViewSummary={() => navigateToScreen('summary')}
+            />
+          )}
+          
+          {currentScreen === 'summary' && currentGame && (
+            <GameSummary
+              game={currentGame}
+              onBack={() => navigateToScreen('cashOut')}
+              onSimplifyDebts={() => navigateToScreen('settlement')}
+              onUpdateGame={updateGame}
+            />
+          )}
+          
+          {currentScreen === 'settlement' && currentGame && (
+            <SettlementScreen
+              game={currentGame}
+              onBack={() => navigateToScreen('summary')}
+              onFinishGame={(gameWithSettlements) => {
+                finishGame(gameWithSettlements);
+                navigateToScreen('home');
+              }}
+            />
+          )}
+          
+          {currentScreen === 'pastGameDetails' && currentGame && (
+            <PastGameDetails
+              game={currentGame}
+              onBack={() => {
+                setCurrentGame(null);
+                navigateToScreen('home');
+              }}
+              onDeleteGame={(gameId) => {
+                removePastGame(gameId);
+                setCurrentGame(null);
+                navigateToScreen('home');
+              }}
+            />
+          )}
+          
+          {currentScreen === 'playerStats' && (
+            <PlayerStats
+              pastGames={pastGames}
+              onBack={() => navigateToScreen('home')}
+            />
+          )}
+
+          {currentScreen === 'login' && (
+            <LoginDemo onLogin={handleLogin} onBack={() => navigateToScreen('home')} />
+          )}
+        </div>
+        <Analytics />
       </div>
-      <Analytics />
-    </div>
+    </GoogleOAuthProvider>
   );
 }
