@@ -27,7 +27,7 @@ interface Transaction {
 export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: SettlementScreenProps) {
   const [showSimplified, setShowSimplified] = useState(true);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
-  const [showPlayerSummaries, setShowPlayerSummaries] = useState(false);
+  const [showPlayerSummaries, setShowPlayerSummaries] = useState(true);
   const [preExistingTransactions, setPreExistingTransactions] = useState<{ id: string; from: Player; to: Player; amount: number; description: string }[]>(
     game.preExistingTransactions || []
   );
@@ -276,7 +276,7 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
     }
     
     if (owedBy.length > 0) {
-      summaryText += `You will receive:\n`;
+      summaryText += `You will receive from:\n`;
       owedBy.forEach(({ player: fromPlayer, amount }) => {
         summaryText += `• ${fromPlayer.name}: $${amount.toFixed(2)}\n`;
       });
@@ -299,7 +299,7 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
     
     if (owedBy.length > 0) {
       const hasPreExisting = owedBy.some(t => t.type === 'pre-existing');
-      summaryText += `${hasPreExisting ? 'You received:' : 'You will receive:'}\n`;
+      summaryText += `${hasPreExisting ? 'You received:' : 'You will receive from'}\n`;
       owedBy.forEach(({ player: fromPlayer, amount, type, description }) => {
         let line = `• ${fromPlayer.name}: $${amount.toFixed(2)}`;
         if (type === 'pre-existing' && description) {
@@ -340,6 +340,9 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
 
   const addPreExistingTransaction = () => {
     if (!newTransaction.fromId || !newTransaction.toId || !newTransaction.amount) return;
+
+    // Prevent adding transaction where from and to are the same player
+    if (newTransaction.fromId === newTransaction.toId) return;
 
     const fromPlayer = game.players.find(p => p.id === newTransaction.fromId);
     const toPlayer = game.players.find(p => p.id === newTransaction.toId);
@@ -399,8 +402,7 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
     const hostFees = game.hostFee * game.players.length;
     const gamePot = totalAmount - hostFees;
     
-    let summary = `Poker Game Results\n\n` +
-      `Total Amount: $${totalAmount}\n` +
+    let summary =`Total Amount: $${totalAmount}\n` +
       `Game Pot: $${gamePot}\n` +
       `Host Fees: $${hostFees}\n` +
       `Players: ${game.players.length}\n\n` +
@@ -418,7 +420,7 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
     }
     // Add pre-existing transactions to the share results
     if (preExistingTransactions.length > 0) {
-      summary += `\n\nPre-Sent Transactions:\n` +
+      summary += `\n\nTransactions:\n` +
         preExistingTransactions.map(t => 
           `${t.from.name} → ${t.to.name}: $${t.amount.toFixed(2)}${t.description ? ` (${t.description})` : ''}`
         ).join('\n');
@@ -504,9 +506,9 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
           <Card className="p-4 border border-border/50 rounded-xl">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-medium">Pre-Sent Transactions</h3>
+                <h3 className="font-medium">Transactions</h3>
                 <p className="text-sm text-muted-foreground">
-                  Money already sent between players during the game
+                  Settlements between players
                 </p>
                 {preExistingTransactions.length > 0 && (
                   <p className="text-xs text-green-600 dark:text-green-400 mt-1">
@@ -526,7 +528,7 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
             </div>
 
             {/* Pre-existing Transactions List */}
-            {preExistingTransactions.length > 0 ? (
+            {preExistingTransactions.length > 0 && (
               <div className="space-y-2">
                 {preExistingTransactions.map((transaction) => (
                   <Card key={transaction.id} className="p-3 border border-border/50 rounded-lg">
@@ -563,10 +565,6 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
                   </Card>
                 ))}
               </div>
-            ) : (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No pre-sent transactions yet
-              </p>
             )}
           </Card>
 
@@ -663,7 +661,7 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
                     {summary.owedBy.length > 0 && (
                       <div>
                         <h4 className="text-sm font-medium text-green-600 dark:text-green-400 mb-2">
-                          {summary.owedBy.some(t => t.type === 'pre-existing') ? 'You received:' : 'You will receive:'}
+                          {summary.owedBy.some(t => t.type === 'pre-existing') ? 'You received:' : 'You will receive from:'}
                         </h4>
                         <div className="space-y-2">
                           {summary.owedBy.map(({ player: fromPlayer, amount, type, description }, idx) => (
@@ -842,11 +840,16 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
                     <SelectValue placeholder="Select player" />
                   </SelectTrigger>
                   <SelectContent>
-                    {game.players.map(player => (
-                      <SelectItem key={player.id} value={player.id}>
-                        {player.name}
-                      </SelectItem>
-                    ))}
+                    {game.players
+                      .filter(player => player.id !== newTransaction.fromId)
+                      .map(player => (
+                        <SelectItem 
+                          key={player.id} 
+                          value={player.id}
+                        >
+                          {player.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -875,12 +878,22 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
                 />
               </div>
             </div>
+            
+            {/* Validation message */}
+            {newTransaction.fromId && newTransaction.toId && newTransaction.fromId === newTransaction.toId && (
+              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 p-2 rounded-lg">
+                Cannot send money to yourself. Please select different players.
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={resetNewTransaction}>
               Cancel
             </Button>
-            <Button onClick={addPreExistingTransaction}>
+            <Button 
+              onClick={addPreExistingTransaction}
+              disabled={!newTransaction.fromId || !newTransaction.toId || !newTransaction.amount || newTransaction.fromId === newTransaction.toId}
+            >
               Add Transaction
             </Button>
           </DialogFooter>
