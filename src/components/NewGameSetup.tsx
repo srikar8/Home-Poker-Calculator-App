@@ -357,9 +357,12 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
                  Add Player
                </Button>
              </DialogTrigger>
-                           <DialogContent className="max-w-sm rounded-xl">
+                           <DialogContent className="max-w-sm rounded-xl" aria-describedby="new-game-add-player-description">
                <DialogHeader>
                  <DialogTitle>Add Player</DialogTitle>
+                 <p id="new-game-add-player-description" className="sr-only">
+                   Add a new player to the game or select from past players
+                 </p>
                </DialogHeader>
                <div className="space-y-4">
                  {/* Option 1: Add New Player */}

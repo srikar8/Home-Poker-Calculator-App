@@ -319,9 +319,12 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
 
       {/* Cash Out Dialog */}
       <Dialog open={isCashOutDialogOpen} onOpenChange={setIsCashOutDialogOpen}>
-        <DialogContent className="max-w-sm rounded-xl">
+        <DialogContent className="max-w-sm rounded-xl" aria-describedby="cash-out-description">
           <DialogHeader>
             <DialogTitle>Update Cash Out Amount</DialogTitle>
+            <p id="cash-out-description" className="sr-only">
+              Update the cash out amount for the selected player
+            </p>
           </DialogHeader>
           <div className="space-y-4">
             {selectedPlayer && (
@@ -370,9 +373,12 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
 
       {/* Confirmation Dialog */}
       <Dialog open={isConfirmationDialogOpen} onOpenChange={setIsConfirmationDialogOpen}>
-        <DialogContent className="max-w-sm rounded-xl">
+        <DialogContent className="max-w-sm rounded-xl" aria-describedby="confirmation-description">
           <DialogHeader>
             <DialogTitle>Confirm Cash Out</DialogTitle>
+            <p id="confirmation-description" className="sr-only">
+              Confirm that you want to proceed to the summary and finalize cash out amounts
+            </p>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-3">

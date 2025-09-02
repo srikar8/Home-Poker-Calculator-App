@@ -252,12 +252,28 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
         return `${p.name}: ${net >= 0 ? '+' : ''}$${net.toFixed(2)}`;
       }).join('\n');
     
+    // Add rebuy history to the share summary if available
+    if (game.rebuyHistory && game.rebuyHistory.length > 0) {
+      summary += `\n\nRebuy History:\n` +
+        game.rebuyHistory
+          .map(rebuy => `${rebuy.playerName}: +$${rebuy.amount} (${rebuy.timestamp})`)
+          .join('\n');
+    }
+    // Add pre-existing transactions to the share results
+    if (game.preExistingTransactions && game.preExistingTransactions.length > 0) {
+      summary += `\n\nPre-Sent Transactions:\n` +
+        game.preExistingTransactions.map(t => 
+          `${t.from.name} → ${t.to.name}: $${t.amount.toFixed(2)}${t.description ? ` (${t.description})` : ''}`
+        ).join('\n');
+    }
+
     if (simplifiedTransactions.length > 0) {
       summary += `\n\nSettlements:\n` +
         simplifiedTransactions.map(t => 
           `${t.from.name} pays ${t.to.name} $${t.amount.toFixed(2)}`
         ).join('\n');
     }
+    
     
     if (navigator.share) {
       navigator.share({
@@ -355,7 +371,6 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
-      weekday: 'long',
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
@@ -601,7 +616,56 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
           );
         })}
       </div>
+      {/* Pre-existing Transactions */}
+      {game.preExistingTransactions && game.preExistingTransactions.length > 0 && (
+        <div className="p-6 pt-4">
+          <Card className="p-4 border border-border/50 rounded-xl">
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium">Pre-Sent Transactions</h3>
+              <p className="text-xs text-muted-foreground">
+                Money already sent between players during the game
+              </p>
+              <p className="text-xs text-green-600 dark:text-green-400">
+                Total: ${game.preExistingTransactions.reduce((sum, t) => sum + t.amount, 0).toFixed(2)} already settled
+              </p>
+              <div className="space-y-2">
+                {game.preExistingTransactions.map((transaction) => (
+                  <div key={transaction.id} className="flex items-center gap-4 p-2 bg-muted/30 rounded-lg">
+                    {/* From Player */}
+                    <div className="flex items-center gap-2">
+                      <Avatar className="w-6 h-6">
+                        <AvatarFallback className="bg-red-100 text-red-700 text-xs dark:bg-red-950 dark:text-red-300">
+                          {getInitials(transaction.from.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium">{transaction.from.name.slice(0, 3)}</span>
+                    </div>
 
+                    {/* Arrow and Amount */}
+                    <div className="flex-1 flex items-center justify-center gap-2">
+                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                      <Badge variant="outline" className="text-xs font-medium px-2 py-1">
+                        ${transaction.amount.toFixed(2)}
+                      </Badge>
+                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                    </div>
+
+                    {/* To Player */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{transaction.to.name.slice(0, 3)}</span>
+                      <Avatar className="w-6 h-6">
+                        <AvatarFallback className="bg-green-100 text-green-700 text-xs dark:bg-green-950 dark:text-green-300">
+                          {getInitials(transaction.to.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
 
       {/* Simplified Transactions */}
@@ -623,7 +687,7 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
                           {getInitials(transaction.from.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-sm font-medium">{transaction.from.name}</span>
+                      <span className="text-sm font-medium">{transaction.from.name.slice(0, 3)}</span>
                     </div>
 
                     {/* Arrow and Amount */}
@@ -637,7 +701,7 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
 
                     {/* To Player */}
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">{transaction.to.name}</span>
+                      <span className="text-sm font-medium">{transaction.to.name.slice(0, 3)}</span>
                       <Avatar className="w-6 h-6">
                         <AvatarFallback className="bg-green-100 text-green-700 text-xs dark:bg-green-950 dark:text-green-300">
                           {getInitials(transaction.to.name)}
@@ -653,13 +717,16 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
       )}
 
       {/* Rebuy History */}
-      {game.rebuyHistory.length > 0 && (
+      {game.rebuyHistory && game.rebuyHistory.length > 0 && (
         <div className="p-6 pt-4">
           <Card className="p-4 border border-border/50 rounded-xl">
             <div className="space-y-3">
               <h3 className="text-sm font-medium">Rebuy History</h3>
+              <p className="text-xs text-muted-foreground">
+                {game.rebuyHistory.length} rebuy{game.rebuyHistory.length !== 1 ? 's' : ''} • Total: ${game.rebuyHistory.reduce((sum, rebuy) => sum + rebuy.amount, 0)}
+              </p>
               <div className="space-y-2">
-                {game.rebuyHistory.map((rebuy) => (
+                {game.rebuyHistory.slice().reverse().map((rebuy) => (
                   <div key={rebuy.id} className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{rebuy.playerName}</span>

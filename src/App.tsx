@@ -42,6 +42,14 @@ export interface SettlementTransaction {
   amount: number;
 }
 
+export interface PreExistingTransaction {
+  id: string;
+  from: Player;
+  to: Player;
+  amount: number;
+  description?: string;
+}
+
 export interface Game {
   id: string;
   date: string;
@@ -53,6 +61,7 @@ export interface Game {
   coHostId?: string;
   rebuyHistory: RebuyTransaction[];
   settlementTransactions: SettlementTransaction[];
+  preExistingTransactions?: PreExistingTransaction[];
   totalPot: number;
   isActive: boolean;
 }
@@ -283,6 +292,7 @@ export default function App() {
                 finishGame(gameWithSettlements);
                 navigateToScreen('home');
               }}
+              onUpdateGame={updateGame}
             />
           )}
           

@@ -307,9 +307,12 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
                   Add Player
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-sm rounded-xl">
+              <DialogContent className="max-w-sm rounded-xl" aria-describedby="add-player-description">
                 <DialogHeader>
                   <DialogTitle>Add Player</DialogTitle>
+                  <p id="add-player-description" className="sr-only">
+                    Add a new player to the game or select from past players
+                  </p>
                 </DialogHeader>
                 <div className="space-y-4">
                   {/* Option 1: Add New Player */}
@@ -415,9 +418,12 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
                    Rebuy
                  </Button>
                </DialogTrigger>
-              <DialogContent className="max-w-sm rounded-xl">
+              <DialogContent className="max-w-sm rounded-xl" aria-describedby="add-rebuy-description">
                 <DialogHeader>
                   <DialogTitle>Add Rebuy</DialogTitle>
+                  <p id="add-rebuy-description" className="sr-only">
+                    Add a rebuy for the selected player
+                  </p>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-2">
@@ -616,9 +622,12 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
 
       {/* Leave Game Confirmation Dialog */}
       <Dialog open={isLeaveConfirmationOpen} onOpenChange={setIsLeaveConfirmationOpen}>
-        <DialogContent className="max-w-sm rounded-xl">
+        <DialogContent className="max-w-sm rounded-xl" aria-describedby="leave-game-description">
           <DialogHeader>
             <DialogTitle>Leave Game?</DialogTitle>
+            <p id="leave-game-description" className="sr-only">
+              Confirm whether to leave the game and save progress
+            </p>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
@@ -654,9 +663,12 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
 
       {/* Remove Player Confirmation Dialog */}
       <Dialog open={isRemovePlayerDialogOpen} onOpenChange={setIsRemovePlayerDialogOpen}>
-        <DialogContent className="max-w-sm rounded-xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-sm rounded-xl max-h-[80vh] overflow-y-auto" aria-describedby="remove-player-description">
           <DialogHeader>
             <DialogTitle>Remove Player</DialogTitle>
+            <p id="remove-player-description" className="sr-only">
+              Confirm removal of the selected player from the game
+            </p>
           </DialogHeader>
           <div className="space-y-4">
             {playerToRemove && (
