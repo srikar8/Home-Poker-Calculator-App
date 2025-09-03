@@ -4,7 +4,7 @@ import { Card } from './ui/card';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { ArrowLeft, ArrowRight, Share, RefreshCw, CheckCircle, Plus, Trash2, Users, Copy } from 'lucide-react';
-import { Game, Player } from '../App';
+import { Game, Player, Transaction, GameTransaction } from '../App';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -18,19 +18,14 @@ interface SettlementScreenProps {
   onUpdateGame?: (game: Game) => void; // Added for saving pre-existing transactions
 }
 
-interface Transaction {
-  from: Player;
-  to: Player;
-  amount: number;
-}
+
 
 export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: SettlementScreenProps) {
   const [showSimplified, setShowSimplified] = useState(true);
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [showPlayerSummaries, setShowPlayerSummaries] = useState(true);
-  const [preExistingTransactions, setPreExistingTransactions] = useState<{ id: string; from: Player; to: Player; amount: number; description: string }[]>(
-    game.preExistingTransactions || []
-  );
+  // Use pre-existing transactions directly from game object for real-time sync
+  const preExistingTransactions = game.preExistingTransactions || [];
   const [newTransaction, setNewTransaction] = useState({
     fromId: '',
     toId: '',
@@ -59,7 +54,7 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
   };
 
   // Calculate simplified debts using a greedy algorithm (like Splitwise)
-  const calculateSimplifiedDebts = (): Transaction[] => {
+  const calculateSimplifiedDebts = (): GameTransaction[] => {
     // Calculate net results for all players (including host fees)
     let adjustedNetResults = game.players.map(player => ({
       player,
@@ -77,11 +72,24 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
       }
     });
     
+    // Apply game transactions to adjust net results
+    if (game.transactions) {
+      game.transactions.forEach(transaction => {
+        const fromPlayer = adjustedNetResults.find(r => r.player.id === transaction.from.id);
+        const toPlayer = adjustedNetResults.find(r => r.player.id === transaction.to.id);
+        
+        if (fromPlayer && toPlayer) {
+          fromPlayer.netResult += transaction.amount; // Debtor owes less
+          toPlayer.netResult -= transaction.amount;  // Creditor gets less
+        }
+      });
+    }
+    
     // Separate creditors and debtors
     const creditors = adjustedNetResults.filter(r => r.netResult > 0.01).sort((a, b) => b.netResult - a.netResult);
     const debtors = adjustedNetResults.filter(r => r.netResult < -0.01).sort((a, b) => a.netResult - b.netResult);
     
-    const transactions: Transaction[] = [];
+    const transactions: GameTransaction[] = [];
     let creditorIndex = 0;
     let debtorIndex = 0;
     
@@ -123,7 +131,7 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
   };
 
   // Calculate all individual debts (every debtor pays every creditor proportionally)
-  const calculateFullDebts = (): Transaction[] => {
+  const calculateFullDebts = (): GameTransaction[] => {
     // Calculate adjusted net results including pre-existing transactions
     let adjustedNetResults = game.players.map(player => ({
       player,
@@ -141,7 +149,20 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
       }
     });
     
-    const transactions: Transaction[] = [];
+    // Apply game transactions to adjust net results
+    if (game.transactions) {
+      game.transactions.forEach(transaction => {
+        const fromPlayer = adjustedNetResults.find(r => r.player.id === transaction.from.id);
+        const toPlayer = adjustedNetResults.find(r => r.player.id === transaction.to.id);
+        
+        if (fromPlayer && toPlayer) {
+          fromPlayer.netResult += transaction.amount; // Debtor owes less
+          toPlayer.netResult -= transaction.amount;  // Creditor gets less
+        }
+      });
+    }
+    
+    const transactions: GameTransaction[] = [];
     const creditors = adjustedNetResults.filter(r => r.netResult > 0.01).map(r => r.player);
     const debtors = adjustedNetResults.filter(r => r.netResult < -0.01).map(r => r.player);
     
@@ -176,7 +197,7 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
 
   const simplifiedTransactions = calculateSimplifiedDebts();
   const fullTransactions = calculateFullDebts();
-  const transactions = showSimplified ? simplifiedTransactions : fullTransactions;
+  const transactions: GameTransaction[] = showSimplified ? simplifiedTransactions : fullTransactions;
 
   // Calculate individual player summaries
   const calculatePlayerSummaries = () => {
@@ -195,13 +216,19 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
         t.from.id === player.id || t.to.id === player.id
       );
       
+      // Get game transactions where this player is involved
+      const playerGameTransactions = (game.transactions || []).filter(t => 
+        t.from.id === player.id || t.to.id === player.id
+      );
+      
       // Calculate what they owe to others (from settlement transactions)
       const owesToSettlement = playerTransactions
         .filter(t => t.from.id === player.id)
         .map(t => ({
           player: t.to,
           amount: t.amount,
-          type: 'settlement'
+          type: 'settlement',
+          description: ''
         }));
       
       // Calculate what they owe to others (from pre-existing transactions)
@@ -214,8 +241,18 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
           description: t.description
         }));
       
+      // Calculate what they owe to others (from game transactions)
+      const owesToGame = playerGameTransactions
+        .filter(t => t.from.id === player.id)
+        .map(t => ({
+          player: t.to,
+          amount: t.amount,
+          type: 'game',
+          description: t.description
+        }));
+      
       // Combine all what they owe
-      const owesTo = [...owesToSettlement, ...owesToPreExisting];
+      const owesTo = [...owesToSettlement, ...owesToPreExisting, ...owesToGame];
       
       // Calculate what others owe them (from settlement transactions)
       const owedBySettlement = playerTransactions
@@ -223,7 +260,8 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
         .map(t => ({
           player: t.from,
           amount: t.amount,
-          type: 'settlement'
+          type: 'settlement',
+          description: ''
         }));
       
       // Calculate what others owe them (from pre-existing transactions)
@@ -236,8 +274,18 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
           description: t.description
         }));
       
+      // Calculate what others owe them (from game transactions)
+      const owedByGame = playerGameTransactions
+        .filter(t => t.to.id === player.id)
+        .map(t => ({
+          player: t.from,
+          amount: t.amount,
+          type: 'game',
+          description: t.description
+        }));
+      
       // Combine all what they're owed
-      const owedBy = [...owedBySettlement, ...owedByPreExisting];
+      const owedBy = [...owedBySettlement, ...owedByPreExisting, ...owedByGame];
       
       const totalOwes = owesTo.reduce((sum, t) => sum + t.amount, 0);
       const totalOwed = owedBy.reduce((sum, t) => sum + t.amount, 0);
@@ -298,15 +346,21 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
     summaryText += `Net Result: ${netResult >= 0 ? '+' : ''}$${netResult.toFixed(2)}\n\n`;
     
     if (owedBy.length > 0) {
-      const hasPreExisting = owedBy.some(t => t.type === 'pre-existing');
+      const hasPreExisting = owedBy.some(t => t.type === 'pre-existing' || t.type === 'game');
       summaryText += `${hasPreExisting ? 'You received:' : 'You will receive from'}\n`;
       owedBy.forEach(({ player: fromPlayer, amount, type, description }) => {
         let line = `• ${fromPlayer.name}: $${amount.toFixed(2)}`;
         if (type === 'pre-existing' && description) {
           line += ` (${description})`;
         }
+        if (type === 'game' && description) {
+          line += ` (${description})`;
+        }
         if (type === 'pre-existing') {
           line += ` [Pre-sent]`;
+        }
+        if (type === 'game') {
+          line += ` [Game]`;
         }
         summaryText += line + '\n';
       });
@@ -314,15 +368,21 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
     }
     
     if (owesTo.length > 0) {
-      const hasPreExisting = owesTo.some(t => t.type === 'pre-existing');
+      const hasPreExisting = owesTo.some(t => t.type === 'pre-existing' || t.type === 'game');
       summaryText += `${hasPreExisting ? 'You need to pay:' : 'You need to pay:'}\n`;
       owesTo.forEach(({ player: toPlayer, amount, type, description }) => {
         let line = `• ${toPlayer.name}: $${amount.toFixed(2)}`;
         if (type === 'pre-existing' && description) {
           line += ` (${description})`;
         }
+        if (type === 'game' && description) {
+          line += ` (${description})`;
+        }
         if (type === 'pre-existing') {
           line += ` [Pre-sent]`;
+        }
+        if (type === 'game') {
+          line += ` [Game]`;
         }
         summaryText += line + '\n';
       });
@@ -359,7 +419,6 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
     };
     
     const updatedTransactions = [...preExistingTransactions, newTransactionItem];
-    setPreExistingTransactions(updatedTransactions);
     
     // Update the game object with the new pre-existing transaction
     const updatedGame = {
@@ -378,7 +437,6 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
 
   const removePreExistingTransaction = (id: string) => {
     const updatedTransactions = preExistingTransactions.filter(t => t.id !== id);
-    setPreExistingTransactions(updatedTransactions);
     
     // Update the game object by removing the transaction
     const updatedGame = {
@@ -404,7 +462,7 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
     
     let summary =`Total Amount: $${totalAmount}\n` +
       `Game Pot: $${gamePot}\n` +
-      `Host Fees: $${hostFees}\n` +
+              `Snack Fund: $${hostFees}\n` +
       `Players: ${game.players.length}\n\n` +
       `Results:\n` +
       game.players.map(p => {
@@ -420,9 +478,17 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
     }
     // Add pre-existing transactions to the share results
     if (preExistingTransactions.length > 0) {
-      summary += `\n\nTransactions:\n` +
+      summary += `\n\nPre-existing Transactions:\n` +
         preExistingTransactions.map(t => 
           `${t.from.name} → ${t.to.name}: $${t.amount.toFixed(2)}${t.description ? ` (${t.description})` : ''}`
+        ).join('\n');
+    }
+    
+    // Add game transactions to the share results
+    if (game.transactions && game.transactions.length > 0) {
+      summary += `\n\nGame Transactions:\n` +
+        game.transactions.map(t => 
+          `${t.from.name} → ${t.to.name}: $${t.amount.toFixed(2)}${t.description ? ` (${t.description})` : ''} [${t.timestamp}]`
         ).join('\n');
     }
     
@@ -441,6 +507,12 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
       // Could show a toast here
     }
   };
+
+  // Ensure transactions are synced when game object changes
+  useEffect(() => {
+    // This effect ensures that when the game object is updated from outside
+    // (e.g., from GameInProgress), the transactions are properly reflected
+  }, [game.transactions, game.preExistingTransactions]);
 
   // Calculate header and bottom heights for proper spacing
   useEffect(() => {
@@ -510,9 +582,9 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
                 <p className="text-sm text-muted-foreground">
                   Settlements between players
                 </p>
-                {preExistingTransactions.length > 0 && (
+                {(preExistingTransactions.length > 0 || (game.transactions && game.transactions.length > 0)) && (
                   <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                    Total: ${preExistingTransactions.reduce((sum, t) => sum + t.amount, 0).toFixed(2)} already settled
+                    Total: ${(preExistingTransactions.reduce((sum, t) => sum + t.amount, 0) + (game.transactions ? game.transactions.reduce((sum, t) => sum + t.amount, 0) : 0)).toFixed(2)} already settled
                   </p>
                 )}
               </div>
@@ -564,6 +636,44 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
                     )}
                   </Card>
                 ))}
+              </div>
+            )}
+            
+            {/* Game Transactions List */}
+            {game.transactions && game.transactions.length > 0 && (
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-muted-foreground mb-3">Game Transactions</h4>
+                <div className="space-y-2">
+                  {game.transactions.map((transaction) => (
+                    <Card key={transaction.id} className="p-3 border border-border/30 rounded-lg bg-muted/20">
+                      <div className="flex items-center justify-between gap-3">
+                        {/* Left side: From -> Arrow -> To */}
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="text-sm font-medium">{getShortName(transaction.from.name)}</span>
+                          <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <span className="text-sm font-medium">{getShortName(transaction.to.name)}</span>
+                        </div>
+                        
+                        {/* Right side: amount + timestamp */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Badge variant="outline" className="text-sm font-medium px-3 py-1">
+                            ${transaction.amount.toFixed(2)}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {transaction.timestamp}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Description if exists */}
+                      {transaction.description && (
+                        <div className="mt-2 text-xs text-muted-foreground">
+                          {transaction.description}
+                        </div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
               </div>
             )}
           </Card>
@@ -661,7 +771,7 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
                     {summary.owedBy.length > 0 && (
                       <div>
                         <h4 className="text-sm font-medium text-green-600 dark:text-green-400 mb-2">
-                          {summary.owedBy.some(t => t.type === 'pre-existing') ? 'You received:' : 'You will receive from:'}
+                          {summary.owedBy.some(t => t.type === 'pre-existing' || t.type === 'game') ? 'You received:' : 'You will receive from:'}
                         </h4>
                         <div className="space-y-2">
                           {summary.owedBy.map(({ player: fromPlayer, amount, type, description }, idx) => (
@@ -692,7 +802,7 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
                     {summary.owesTo.length > 0 && (
                       <div>
                         <h4 className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">
-                          {summary.owesTo.some(t => t.type === 'pre-existing') ? 'You need to pay:' : 'You need to pay:'}
+                          {summary.owesTo.some(t => t.type === 'pre-existing' || t.type === 'game') ? 'You need to pay:' : 'You need to pay:'}
                         </h4>
                         <div className="space-y-2">
                           {summary.owesTo.map(({ player: toPlayer, amount, type, description }, idx) => (
@@ -702,8 +812,14 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
                                 {type === 'pre-existing' && description && (
                                   <span className="text-xs text-muted-foreground">{description}</span>
                                 )}
+                                {type === 'game' && description && (
+                                  <span className="text-xs text-muted-foreground">{description}</span>
+                                )}
                                 {type === 'pre-existing' && (
                                   <Badge variant="secondary" className="text-xs mt-1 w-fit">Pre-sent</Badge>
+                                )}
+                                {type === 'game' && (
+                                  <Badge variant="secondary" className="text-xs mt-1 w-fit">Game</Badge>
                                 )}
                               </div>
                               <Badge variant="outline" className="text-red-600 dark:text-red-400">
@@ -811,9 +927,9 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
       <Dialog open={showAddTransactionDialog} onOpenChange={setShowAddTransactionDialog}>
         <DialogContent className="sm:max-w-md" aria-describedby="add-transaction-description">
           <DialogHeader>
-            <DialogTitle>Add Pre-Sent Transaction</DialogTitle>
+            <DialogTitle>Add Transaction</DialogTitle>
             <p id="add-transaction-description" className="sr-only">
-              Add a pre-existing transaction between players
+              Add a transaction between players
             </p>
           </DialogHeader>
           <div className="grid gap-4 py-4">

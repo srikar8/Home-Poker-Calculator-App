@@ -130,10 +130,10 @@ export function GameSummary({ game, onBack, onSimplifyDebts, onUpdateGame }: Gam
                   </span>
                 </div>
                 
-                {/* Host Fee Input */}
+                {/* Snack Fund Input */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">Host Fee (per player):</span>
+                    <span className="text-sm text-muted-foreground">Snack Fund (per player):</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <Input
@@ -153,7 +153,7 @@ export function GameSummary({ game, onBack, onSimplifyDebts, onUpdateGame }: Gam
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                  (Total Amount = Game Pot + Host Fees)
+                  (Total Amount = Game Pot + Snack Fund)
                 </p>
               </div>
             </div>

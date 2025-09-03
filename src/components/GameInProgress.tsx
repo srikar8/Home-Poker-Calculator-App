@@ -391,7 +391,7 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
                         </div>
                         <div className="text-right text-xs text-muted-foreground">
                           <p>To pot: ${game.buyInAmount}</p>
-                          <p>Host fee: ${game.hostFee}</p>
+                          <p>Snack Fund: ${game.hostFee}</p>
                         </div>
                       </div>
                     </div>

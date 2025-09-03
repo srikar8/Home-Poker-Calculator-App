@@ -36,7 +36,9 @@ export interface RebuyTransaction {
   timestamp: string;
 }
 
-export interface SettlementTransaction {
+
+
+export interface GameTransaction {
   from: Player;
   to: Player;
   amount: number;
@@ -50,6 +52,15 @@ export interface PreExistingTransaction {
   description?: string;
 }
 
+export interface Transaction {
+  id: string;
+  from: Player;
+  to: Player;
+  amount: number;
+  description: string;
+  timestamp: string;
+}
+
 export interface Game {
   id: string;
   date: string;
@@ -60,8 +71,9 @@ export interface Game {
   hostId: string;
   coHostId?: string;
   rebuyHistory: RebuyTransaction[];
-  settlementTransactions: SettlementTransaction[];
+  settlementTransactions: GameTransaction[];
   preExistingTransactions?: PreExistingTransaction[];
+  transactions?: Transaction[];
   totalPot: number;
   isActive: boolean;
 }

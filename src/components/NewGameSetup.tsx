@@ -287,7 +287,7 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
                 
                 <div className="flex-1">
                   <Label htmlFor="host-fee" className="text-xs text-muted-foreground mb-1 block">
-                    Host Fee
+                    Snack Fund
                   </Label>
                   <Input
                     id="host-fee"
@@ -330,7 +330,7 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
                       <span className="font-medium text-blue-600">${getTotalPotContribution()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Host fees:</span>
+                      <span className="text-muted-foreground">Snack Fund:</span>
                       <span className="font-medium text-green-600">${getTotalHostFeeCollection()}</span>
                     </div>
                   </div>

@@ -244,7 +244,7 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
       `Date: ${formatDate(game.date)}\n` +
       `Total Amount: $${totalAmount}\n` +
       `Game Pot: $${gamePot}\n` +
-      `Host Fees: $${hostFees}\n` +
+              `Snack Fund: $${hostFees}\n` +
       `Players: ${game.players.length}\n\n` +
       `Results:\n` +
       game.players.map(p => {
@@ -261,7 +261,7 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
     }
     // Add pre-existing transactions to the share results
     if (game.preExistingTransactions && game.preExistingTransactions.length > 0) {
-      summary += `\n\nPre-Sent Transactions:\n` +
+      summary += `\n\nTransactions:\n` +
         game.preExistingTransactions.map(t => 
           `${t.from.name} → ${t.to.name}: $${t.amount.toFixed(2)}${t.description ? ` (${t.description})` : ''}`
         ).join('\n');
@@ -478,13 +478,13 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Host fees:</span>
+                  <span className="text-sm text-muted-foreground">Snack Fund:</span>
                   <span className="text-sm font-medium text-green-600">
                     ${getTotalHostFees()}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  (Total = Game Pot + Host Fees)
+                  (Total = Game Pot + Snack Fund)
                 </p>
               </div>
             )}
@@ -503,13 +503,13 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
                 </div>
                 <p className="text-sm font-medium">${game.buyInAmount}</p>
               </div>
-              <div className="text-center flex-1">
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  <Users className="w-4 h-4 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">Host Fee</p>
-                </div>
-                <p className="text-sm font-medium">${game.hostFee}</p>
-              </div>
+                                <div className="text-center flex-1">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <Users className="w-4 h-4 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Snack Fund</p>
+                    </div>
+                    <p className="text-sm font-medium">${game.hostFee}</p>
+                  </div>
               <div className="text-center flex-1">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <RefreshCw className="w-4 h-4 text-muted-foreground" />
@@ -621,9 +621,9 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
         <div className="p-6 pt-4">
           <Card className="p-4 border border-border/50 rounded-xl">
             <div className="space-y-3">
-              <h3 className="text-sm font-medium">Pre-Sent Transactions</h3>
+              <h3 className="text-sm font-medium">Transactions</h3>
               <p className="text-xs text-muted-foreground">
-                Money already sent between players during the game
+                Settlements between players
               </p>
               <p className="text-xs text-green-600 dark:text-green-400">
                 Total: ${game.preExistingTransactions.reduce((sum, t) => sum + t.amount, 0).toFixed(2)} already settled
