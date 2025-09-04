@@ -33,6 +33,9 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
     description: ''
   });
   const [showAddTransactionDialog, setShowAddTransactionDialog] = useState(false);
+  const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
+  const [selectedSummary, setSelectedSummary] = useState<any>(null);
+  const [contactNumber, setContactNumber] = useState('');
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 3);
@@ -339,7 +342,13 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
     // Could show a toast here
   };
 
-  const shareToWhatsApp = (summary: any) => {
+  const handleWhatsAppShare = (summary: any) => {
+    setSelectedSummary(summary);
+    setContactNumber('');
+    setShowWhatsAppDialog(true);
+  };
+
+  const shareToWhatsApp = (summary: any, contactNumber?: string) => {
     const { player, netResult, owesTo, owedBy, totalOwes, totalOwed } = summary;
     
     let summaryText = `${player.name}'s Settlement Summary\n\n`;
@@ -393,9 +402,25 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
       summaryText += `No money needs to change hands for you.`;
     }
     
-    // Create WhatsApp share URL
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(summaryText)}`;
+    // Create WhatsApp share URL with optional contact number
+    let whatsappUrl = `https://wa.me/`;
+    if (contactNumber) {
+      // Remove any non-digit characters and ensure it starts with country code
+      const cleanNumber = contactNumber.replace(/\D/g, '');
+      whatsappUrl += `${cleanNumber}?text=${encodeURIComponent(summaryText)}`;
+    } else {
+      whatsappUrl += `?text=${encodeURIComponent(summaryText)}`;
+    }
     window.open(whatsappUrl, '_blank');
+  };
+
+  const confirmWhatsAppShare = () => {
+    if (selectedSummary) {
+      shareToWhatsApp(selectedSummary, contactNumber || undefined);
+      setShowWhatsAppDialog(false);
+      setSelectedSummary(null);
+      setContactNumber('');
+    }
   };
 
   const addPreExistingTransaction = () => {
@@ -758,7 +783,7 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => shareToWhatsApp(summary)}
+                      onClick={() => handleWhatsAppShare(summary)}
                       className="h-8 px-3"
                     >
                       <Share className="w-3 h-3 mr-1" />
@@ -1011,6 +1036,41 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
               disabled={!newTransaction.fromId || !newTransaction.toId || !newTransaction.amount || newTransaction.fromId === newTransaction.toId}
             >
               Add Transaction
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* WhatsApp Share Dialog */}
+      <Dialog open={showWhatsAppDialog} onOpenChange={setShowWhatsAppDialog}>
+        <DialogContent className="sm:max-w-md" aria-describedby="whatsapp-share-description">
+          <DialogHeader>
+            <DialogTitle>Share to WhatsApp</DialogTitle>
+            <p id="whatsapp-share-description" className="sr-only">
+              Share settlement summary to WhatsApp with optional contact number
+            </p>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="contact-number">Contact Number (Optional)</Label>
+              <Input
+                id="contact-number"
+                type="tel"
+                value={contactNumber}
+                onChange={(e) => setContactNumber(e.target.value)}
+                placeholder="e.g., +1234567890 or 1234567890"
+              />
+              <p className="text-xs text-muted-foreground">
+                Include country code (e.g., +1 for US). Leave empty to share without specific contact.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowWhatsAppDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmWhatsAppShare}>
+              Share to WhatsApp
             </Button>
           </DialogFooter>
         </DialogContent>

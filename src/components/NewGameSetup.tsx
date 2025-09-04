@@ -21,21 +21,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
-import { Game } from '../App';
+import { Game, User } from '../App';
 
 interface NewGameSetupProps {
+  user: User | null;
+  pastGames: Game[];
   onBack: () => void;
   onStartGame: (players: { id: string; name: string; avatar?: string }[], buyInAmount: number, hostFee: number, defaultRebuyAmount: number, hostId: string, coHostId?: string) => void;
 }
 
 // Utility function to extract unique players from past games, excluding demo games
-const getUniquePlayersFromPastGames = (): { id: string; name: string; avatar?: string }[] => {
+const getUniquePlayersFromPastGames = (pastGames: Game[]): { id: string; name: string; avatar?: string }[] => {
   try {
-    const savedPastGames = localStorage.getItem('pastGames');
-    if (!savedPastGames) return [];
-    
-    const pastGames: Game[] = JSON.parse(savedPastGames);
-    
     // Filter out demo games (games with id '1' or '2')
     const nonDemoGames = pastGames.filter(game => game.id !== '1' && game.id !== '2');
     
@@ -61,8 +58,8 @@ const getUniquePlayersFromPastGames = (): { id: string; name: string; avatar?: s
 };
 
 // Utility function to get available players from past games (excluding those already in current game)
-const getAvailablePastPlayers = (currentPlayers: { id: string; name: string; avatar?: string }[]): { id: string; name: string; avatar?: string }[] => {
-  const allPastPlayers = getUniquePlayersFromPastGames();
+const getAvailablePastPlayers = (currentPlayers: { id: string; name: string; avatar?: string }[], pastGames: Game[]): { id: string; name: string; avatar?: string }[] => {
+  const allPastPlayers = getUniquePlayersFromPastGames(pastGames);
   
   // Filter out players who are already in the current game
   return allPastPlayers.filter(pastPlayer => 
@@ -73,13 +70,8 @@ const getAvailablePastPlayers = (currentPlayers: { id: string; name: string; ava
 };
 
 // Utility function to get the most recent game's settings
-const getMostRecentGameSettings = (): { buyInAmount: number; hostFee: number; defaultRebuyAmount: number } | null => {
+const getMostRecentGameSettings = (pastGames: Game[]): { buyInAmount: number; hostFee: number; defaultRebuyAmount: number } | null => {
   try {
-    const savedPastGames = localStorage.getItem('pastGames');
-    if (!savedPastGames) return null;
-    
-    const pastGames: Game[] = JSON.parse(savedPastGames);
-    
     // Filter out demo games (games with id '1' or '2')
     const nonDemoGames = pastGames.filter(game => game.id !== '1' && game.id !== '2');
     
@@ -99,7 +91,7 @@ const getMostRecentGameSettings = (): { buyInAmount: number; hostFee: number; de
   }
 };
 
-export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
+export function NewGameSetup({ user, pastGames, onBack, onStartGame }: NewGameSetupProps) {
   const [players, setPlayers] = useState<{ id: string; name: string; avatar?: string }[]>([]);
   const [newPlayerName, setNewPlayerName] = useState('');
   const [buyInAmount, setBuyInAmount] = useState('50');
@@ -115,10 +107,35 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
 
   // Auto-populate players and game settings from past games on component mount
   useEffect(() => {
-    const pastPlayers = getUniquePlayersFromPastGames();
-    const recentSettings = getMostRecentGameSettings();
+    const pastPlayers = getUniquePlayersFromPastGames(pastGames);
+    const recentSettings = getMostRecentGameSettings(pastGames);
     
-    if (pastPlayers.length > 0) {
+    // If user is logged in, add them as the first player and default host
+    if (user) {
+      const userPlayer = {
+        id: user.id,
+        name: user.name,
+        avatar: undefined
+      };
+      
+      // Check if user is already in past players
+      const userExists = pastPlayers.some(p => p.id === user.id || p.name.toLowerCase() === user.name.toLowerCase());
+      
+      if (!userExists) {
+        setPlayers([userPlayer, ...pastPlayers]);
+        setSelectedHostId(user.id);
+      } else {
+        setPlayers(pastPlayers);
+        // Find the user in past players and set as host
+        const userInPastPlayers = pastPlayers.find(p => p.id === user.id || p.name.toLowerCase() === user.name.toLowerCase());
+        if (userInPastPlayers) {
+          setSelectedHostId(userInPastPlayers.id);
+        } else {
+          setSelectedHostId(pastPlayers[0]?.id || '');
+        }
+      }
+      setAutoPopulated(true);
+    } else if (pastPlayers.length > 0) {
       setPlayers(pastPlayers);
       // Set the first player as host by default
       setSelectedHostId(pastPlayers[0].id);
@@ -131,14 +148,14 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
       setHostFee(recentSettings.hostFee.toString());
       setDefaultRebuyAmount(recentSettings.defaultRebuyAmount.toString());
     }
-  }, []);
+  }, [user, pastGames]);
 
   const addPlayer = () => {
     let playerToAdd: { id: string; name: string; avatar?: string } | null = null;
 
     // Check if a past player is selected
     if (selectedPastPlayerId) {
-      const availablePastPlayers = getAvailablePastPlayers(players);
+      const availablePastPlayers = getAvailablePastPlayers(players, pastGames);
       const selectedPastPlayer = availablePastPlayers.find(p => p.id === selectedPastPlayerId);
       if (selectedPastPlayer) {
         playerToAdd = selectedPastPlayer;
@@ -410,7 +427,7 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
                        <SelectValue placeholder="Select a player from past games" />
                      </SelectTrigger>
                      <SelectContent>
-                       {getAvailablePastPlayers(players).map((player) => (
+                       {getAvailablePastPlayers(players, pastGames).map((player) => (
                          <SelectItem key={player.id} value={player.id}>
                            <div className="flex items-center gap-2">
                              <Avatar className="w-6 h-6">
@@ -422,7 +439,7 @@ export function NewGameSetup({ onBack, onStartGame }: NewGameSetupProps) {
                            </div>
                          </SelectItem>
                        ))}
-                       {getAvailablePastPlayers(players).length === 0 && (
+                       {getAvailablePastPlayers(players, pastGames).length === 0 && (
                          <div className="px-2 py-1.5 text-sm text-muted-foreground">
                            No past players available
                          </div>
