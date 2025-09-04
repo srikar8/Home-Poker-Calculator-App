@@ -15,9 +15,11 @@ interface HomeScreenProps {
   onViewStats: () => void;
   onLogin: () => void;
   onLogout: () => void;
+  onJoinGame: () => void;
+  onViewMyGame: () => void;
 }
 
-export function HomeScreen({ user, pastGames, currentGame, onStartNewGame, onViewPastGame, onResumeGame, onViewStats, onLogin, onLogout }: HomeScreenProps) {
+export function HomeScreen({ user, pastGames, currentGame, onStartNewGame, onViewPastGame, onResumeGame, onViewStats, onLogin, onLogout, onJoinGame, onViewMyGame }: HomeScreenProps) {
   const [isRecentGamesOpen, setIsRecentGamesOpen] = useState(false);
   
   // Helper function to identify demo/sample games
@@ -181,6 +183,113 @@ export function HomeScreen({ user, pastGames, currentGame, onStartNewGame, onVie
           </div>
         </Card>
 
+        {/* Join Game Card */}
+        <Card 
+          className="p-6 border-0 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 dark:from-purple-950/40 dark:via-violet-950/40 dark:to-indigo-950/40 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:scale-[1.03] hover:-translate-y-1 border-l-4 border-l-purple-500 hover:border-l-purple-400"
+          onClick={onJoinGame}
+          style={{
+            background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 25%, #e9d5ff 50%, #d8b4fe 75%, #c084fc 100%)',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.03) translateY(-4px)';
+            e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 20px -5px rgba(0, 0, 0, 0.1)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 25%, #d8b4fe 50%, #c084fc 75%, #a855f7 100%)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1) translateY(0)';
+            e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 25%, #e9d5ff 50%, #d8b4fe 75%, #c084fc 100%)';
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <div 
+              className="w-12 h-12 rounded-full flex items-center justify-center"
+              style={{
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%)',
+                boxShadow: '0 4px 14px 0 rgba(139, 92, 246, 0.4)'
+              }}
+            >
+              <Users className="w-6 h-6 text-white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-purple-900 dark:text-purple-100 mb-1 text-lg">Join Game</h3>
+              <p className="text-sm text-purple-700 dark:text-purple-300">Enter a game code to join an existing game</p>
+            </div>
+            <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse" style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
+          </div>
+        </Card>
+
+        {/* View My Game Card */}
+        <Card 
+          className="p-6 border-0 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-amber-950/40 dark:via-orange-950/40 dark:to-yellow-950/40 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:scale-[1.03] hover:-translate-y-1 border-l-4 border-l-amber-500 hover:border-l-amber-400"
+          onClick={onViewMyGame}
+          style={{
+            background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 25%, #fde68a 50%, #f59e0b 75%, #d97706 100%)',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'scale(1.03) translateY(-4px)';
+            e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 20px -5px rgba(0, 0, 0, 0.1)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #fef3c7 0%, #fde68a 25%, #f59e0b 50%, #d97706 75%, #b45309 100%)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'scale(1) translateY(0)';
+            e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 25%, #fde68a 50%, #f59e0b 75%, #d97706 100%)';
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <div 
+              className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg"
+              style={{
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)',
+                boxShadow: '0 10px 15px -3px rgba(245, 158, 11, 0.3), 0 4px 6px -2px rgba(245, 158, 11, 0.2)'
+              }}
+            >
+              <Calendar className="w-6 h-6 text-white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-amber-900 dark:text-amber-100 mb-1 text-lg">View My Game</h3>
+              <div className="flex items-center gap-4 text-sm text-amber-700 dark:text-amber-300">
+                {currentGame && currentGame.isActive ? (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <Badge variant="default" className="bg-green-500 text-white text-xs">
+                        In Progress
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Users className="w-4 h-4" />
+                      <span>{currentGame.players.length} players</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <DollarSign className="w-4 h-4" />
+                      <span>${getCurrentPot()} pot</span>
+                    </div>
+                  </>
+                ) : pastGames.length > 0 ? (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <Users className="w-4 h-4" />
+                      <span>{pastGames.length} games played</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <DollarSign className="w-4 h-4" />
+                      <span>${pastGames[0].totalPot} total</span>
+                    </div>
+                  </>
+                ) : (
+                  <span>No games yet</span>
+                )}
+              </div>
+            </div>
+            <div className="w-3 h-3 bg-amber-400 rounded-full animate-pulse" style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
+          </div>
+        </Card>
+
         {/* View Stats Card */}
         <Card 
           className="p-6 border-0 bg-gradient-to-br from-cyan-50 via-blue-50 to-sky-100 dark:from-cyan-950/40 dark:via-blue-950/40 dark:to-sky-900/40 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:scale-[1.03] hover:-translate-y-1 border-l-4 border-l-cyan-500 hover:border-l-cyan-400"
@@ -253,9 +362,17 @@ export function HomeScreen({ user, pastGames, currentGame, onStartNewGame, onVie
                   </div>
                   <div>
                     <h3 className="font-bold text-purple-900 dark:text-purple-100 mb-1 text-lg">Games Hosted</h3>
-                    <p className="text-sm text-purple-700 dark:text-purple-300">
-                      {pastGames.filter(game => !isDemoGame(game)).length} game{pastGames.filter(game => !isDemoGame(game)).length !== 1 ? 's' : ''}
-                    </p>
+                    <div className="flex items-center gap-2 text-sm text-purple-700 dark:text-purple-300">
+                      <span>{pastGames.filter(game => !isDemoGame(game)).length} total</span>
+                      {currentGame && currentGame.isActive && (
+                        <>
+                          <span>•</span>
+                          <Badge variant="default" className="bg-green-500 text-white text-xs">
+                            In Progress
+                          </Badge>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
                 {isRecentGamesOpen ? (
@@ -301,9 +418,20 @@ export function HomeScreen({ user, pastGames, currentGame, onStartNewGame, onVie
                           <Calendar className="w-6 h-6 text-gray-700 dark:text-gray-200" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                            {formatDate(game.date)}
-                          </h3>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                              {formatDate(game.date)}
+                            </h3>
+                            {game.isActive ? (
+                              <Badge variant="default" className="bg-green-500 text-white text-xs">
+                                In Progress
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-xs">
+                                Completed
+                              </Badge>
+                            )}
+                          </div>
                           <div className="flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300">
                             <div className="flex items-center gap-1">
                               <Users className="w-4 h-4" />
@@ -311,7 +439,11 @@ export function HomeScreen({ user, pastGames, currentGame, onStartNewGame, onVie
                             </div>
                             <div className="flex items-center gap-1">
                               <DollarSign className="w-4 h-4" />
-                              <span>${game.totalPot} stakes</span>
+                              <span>${game.buyInAmount} buy-in</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="w-4 h-4" />
+                              <span>${game.totalPot} total pot</span>
                             </div>
                           </div>
                         </div>

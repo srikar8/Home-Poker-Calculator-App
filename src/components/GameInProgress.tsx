@@ -167,9 +167,21 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
     }
 
     if (playerToAdd) {
+      // Ensure host appears first, then other players in join order
+      const hostPlayer = game.players.find(p => {
+        const originalUserId = p.id.includes('_') ? p.id.split('_')[1] : p.id;
+        return originalUserId === game.hostId;
+      });
+      const otherPlayers = game.players.filter(p => {
+        const originalUserId = p.id.includes('_') ? p.id.split('_')[1] : p.id;
+        return originalUserId !== game.hostId;
+      });
+      
       const updatedGame = {
         ...game,
-        players: [...game.players, playerToAdd]
+        players: hostPlayer 
+          ? [hostPlayer, ...otherPlayers, playerToAdd]
+          : [...game.players, playerToAdd]
       };
       
       onUpdateGame(updatedGame);
@@ -509,12 +521,12 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="text-sm font-medium">{player.name}</h3>
-                          {player.id === game.hostId && (
+                          {player.id.split('_')[1] === game.hostId && (
                             <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full dark:bg-green-900/30 dark:text-green-300">
                               Host
                             </span>
                           )}
-                          {player.id === game.coHostId && (
+                          {player.id.split('_')[1] === game.coHostId && (
                             <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full dark:bg-green-900/30 dark:text-green-300">
                               Co-host
                             </span>
@@ -531,7 +543,7 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
                         </div>
                       </div>
                       
-                      {game.players.length > 2 && player.id !== game.hostId && (
+                      {game.players.length > 2 && player.id.split('_')[1] !== game.hostId && (
                         <Button
                           variant="ghost"
                           size="sm"

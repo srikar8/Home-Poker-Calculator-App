@@ -232,7 +232,7 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
             const netResult = getNetResult(player);
             const isProfit = netResult > 0;
             const isComplete = cashOutValues[player.id] && parseFloat(cashOutValues[player.id]) > 0;
-            const isHost = player.id === game.hostId; // Use the actual hostId from the game
+            const isHost = player.id.split('_')[1] === game.hostId; // Use the actual hostId from the game
             
             return (
               <Card 

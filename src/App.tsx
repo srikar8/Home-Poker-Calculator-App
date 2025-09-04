@@ -10,9 +10,13 @@ import { SettlementScreen } from './components/SettlementScreen';
 import { PastGameDetails } from './components/PastGameDetails';
 import { PlayerStats } from './components/PlayerStats';
 import { LoginDemo } from './components/LoginDemo';
-import { createUser, getUser, saveGame, getGames, getCurrentGame, deleteGame } from './lib/database';
+import { JoinGameScreen } from './components/JoinGameScreen';
+import { GameLobby } from './components/GameLobby';
+import { PlayerGameView } from './components/PlayerGameView';
+import { ViewMyGameScreen } from './components/ViewMyGameScreen';
+import { createUser, getUser, saveGame, getGames, getCurrentGame, deleteGame, getGameByCode, joinGameByCode, generateUniqueGameCode } from './lib/database';
 
-export type Screen = 'home' | 'newGame' | 'gameInProgress' | 'cashOut' | 'summary' | 'settlement' | 'pastGameDetails' | 'playerStats' | 'login';
+export type Screen = 'home' | 'newGame' | 'gameInProgress' | 'cashOut' | 'summary' | 'settlement' | 'pastGameDetails' | 'playerStats' | 'login' | 'joinGame' | 'gameLobby' | 'playerGameView' | 'viewMyGame';
 
 export interface User {
   id: string;
@@ -77,6 +81,10 @@ export interface Game {
   transactions?: Transaction[];
   totalPot: number;
   isActive: boolean;
+  gameStarted: boolean;
+  gameCode?: string;
+  codeExpiresAt?: string;
+  maxPlayers?: number;
 }
 
 export default function App() {
@@ -85,6 +93,7 @@ export default function App() {
   const [currentGame, setCurrentGame] = useState<Game | null>(null);
   const [pastGames, setPastGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
+  const [joinGameCode, setJoinGameCode] = useState<string | null>(null);
 
   // Load user and games from Supabase on app initialization
   useEffect(() => {
@@ -297,11 +306,17 @@ export default function App() {
   };
 
   const createNewGame = async (players: Omit<Player, 'buyIn' | 'rebuys' | 'cashOut'>[], buyInAmount: number, hostFee: number, defaultRebuyAmount: number, hostId: string, coHostId?: string) => {
+    // Generate a unique game code and set expiration (24 hours from now)
+    const gameCode = await generateUniqueGameCode();
+    const codeExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours from now
+    
+    const gameId = Date.now().toString();
     const newGame: Game = {
-      id: Date.now().toString(),
+      id: gameId,
       date: new Date().toISOString().split('T')[0],
       players: players.map(p => ({
         ...p,
+        id: `${gameId}_${p.id}`, // Use composite ID format
         buyIn: buyInAmount,
         rebuys: 0,
         cashOut: 0
@@ -314,19 +329,29 @@ export default function App() {
       rebuyHistory: [],
       settlementTransactions: [],
       totalPot: 0,
-      isActive: true
+      isActive: true,
+      gameStarted: false,
+      gameCode,
+      codeExpiresAt,
+      maxPlayers: 8
     };
 
     if (user) {
       try {
         await saveGame(newGame, user.id);
         setCurrentGame(newGame);
-        navigateToScreen('gameInProgress');
+        
+        // For logged-in users: go to QR code lobby if 1 player, game in progress if 2+ players
+        if (players.length === 1) {
+          navigateToScreen('gameLobby');
+        } else {
+          navigateToScreen('gameInProgress');
+        }
       } catch (error) {
         console.error('Error creating new game:', error);
       }
     } else {
-      // Demo mode - just set the game locally
+      // Demo mode - just set the game locally and go to game in progress
       setCurrentGame(newGame);
       navigateToScreen('gameInProgress');
     }
@@ -421,8 +446,15 @@ export default function App() {
       console.error('Error loading user data:', error);
     }
     
-    // Navigate back to home after successful login
-    navigateToScreen('home');
+    // If user was trying to join a game, handle that now
+    if (joinGameCode) {
+      const gameCode = joinGameCode;
+      setJoinGameCode(null);
+      await handleJoinGame(gameCode);
+    } else {
+      // Navigate back to home after successful login
+      navigateToScreen('home');
+    }
   };
 
   const handleLogout = () => {
@@ -433,6 +465,45 @@ export default function App() {
     localStorage.removeItem('user');
     // Stay on the same home page instead of navigating to login
     // navigateToScreen('login'); // Removed this line
+  };
+
+  const handleJoinGame = async (gameCode: string) => {
+    if (!user) {
+      setJoinGameCode(gameCode);
+      navigateToScreen('login');
+      return;
+    }
+
+    try {
+      const joinedGame = await joinGameByCode(gameCode, user);
+      setCurrentGame(joinedGame);
+      navigateToScreen('gameLobby');
+    } catch (error: any) {
+      console.error('Error joining game:', error);
+      // Handle error - could show a toast or error message
+    }
+  };
+
+  const handleStartGameFromLobby = async () => {
+    if (currentGame) {
+      const updatedGame = {
+        ...currentGame,
+        gameStarted: true
+      };
+      await updateGame(updatedGame);
+      navigateToScreen('gameInProgress');
+    }
+  };
+
+  const handleBackFromLobby = () => {
+    if (currentGame && user?.id === currentGame.hostId) {
+      // Host can go back to home, game will remain active
+      navigateToScreen('home');
+    } else {
+      // Non-host players go back to home
+      setCurrentGame(null);
+      navigateToScreen('home');
+    }
   };
 
   if (loading) {
@@ -462,6 +533,19 @@ export default function App() {
               onViewStats={() => navigateToScreen('playerStats')}
               onLogin={() => navigateToScreen('login')}
               onLogout={handleLogout}
+              onJoinGame={() => navigateToScreen('joinGame')}
+              onViewMyGame={() => navigateToScreen('viewMyGame')}
+            />
+          )}
+
+          {currentScreen === 'viewMyGame' && (
+            <ViewMyGameScreen
+              user={user}
+              currentGame={currentGame}
+              pastGames={pastGames}
+              onBack={() => navigateToScreen('home')}
+              onResumeGame={resumeGame}
+              onViewPastGame={(game) => navigateToScreen('pastGameDetails', game)}
             />
           )}
           
@@ -538,6 +622,46 @@ export default function App() {
 
           {currentScreen === 'login' && (
             <LoginDemo onLogin={handleLogin} onBack={() => navigateToScreen('home')} />
+          )}
+
+          {currentScreen === 'joinGame' && (
+            <JoinGameScreen
+              gameCode={joinGameCode || undefined}
+              user={user}
+              onBack={() => {
+                setJoinGameCode(null);
+                navigateToScreen('home');
+              }}
+              onJoinGame={(game) => {
+                setCurrentGame(game);
+                // If game has started, show player view, otherwise show lobby
+                if (game.gameStarted) {
+                  navigateToScreen('playerGameView');
+                } else {
+                  navigateToScreen('gameLobby');
+                }
+              }}
+              onLogin={() => navigateToScreen('login')}
+            />
+          )}
+
+          {currentScreen === 'gameLobby' && currentGame && (
+            <GameLobby
+              game={currentGame}
+              user={user}
+              onBack={handleBackFromLobby}
+              onStartGame={handleStartGameFromLobby}
+              onUpdateGame={updateGame}
+              onNavigateToPlayerView={() => navigateToScreen('playerGameView')}
+            />
+          )}
+
+          {currentScreen === 'playerGameView' && currentGame && (
+            <PlayerGameView
+              game={currentGame}
+              user={user}
+              onBack={() => navigateToScreen('home')}
+            />
           )}
         </div>
         <Analytics />

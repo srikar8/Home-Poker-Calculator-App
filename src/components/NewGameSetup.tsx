@@ -207,7 +207,10 @@ export function NewGameSetup({ user, pastGames, onBack, onStartGame }: NewGameSe
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const canStartGame = players.length >= 2 && selectedHostId !== '' && parseFloat(buyInAmount) > 0 && parseFloat(hostFee) >= 0;
+  // Different requirements based on login status
+  const canStartGame = user 
+    ? players.length >= 1 && selectedHostId !== '' && parseFloat(buyInAmount) > 0 && parseFloat(hostFee) >= 0  // Logged in: 1+ players
+    : players.length >= 2 && selectedHostId !== '' && parseFloat(buyInAmount) > 0 && parseFloat(hostFee) >= 0; // Not logged in: 2+ players
 
   const resetAddPlayerForm = () => {
     setNewPlayerName('');
@@ -557,8 +560,16 @@ export function NewGameSetup({ user, pastGames, onBack, onStartGame }: NewGameSe
             </div>
           )}
 
-          {/* Minimum players message */}
-          {players.length === 1 && (
+          {/* Different messages based on login status */}
+          {players.length === 1 && user && (
+            <div className="text-center py-4">
+              <p className="text-sm text-muted-foreground">
+                You can create the game now to get the QR code, or add more players first
+              </p>
+            </div>
+          )}
+          
+          {players.length === 1 && !user && (
             <div className="text-center py-4">
               <p className="text-sm text-muted-foreground">
                 Add at least one more player to start the game
@@ -575,10 +586,13 @@ export function NewGameSetup({ user, pastGames, onBack, onStartGame }: NewGameSe
           disabled={!canStartGame}
           className="w-full h-12 text-base rounded-xl"
         >
-          Start Game
+          {user 
+            ? (players.length >= 2 ? 'Start Game' : 'Create Game & Get QR Code')
+            : 'Start Game'
+          }
           {players.length > 0 && (
             <span className="ml-2 text-sm opacity-75">
-              ({players.length} players • ${getTotalPlayerCost()} each)
+              ({players.length} player{players.length !== 1 ? 's' : ''} • ${getTotalPlayerCost()} each)
             </span>
           )}
         </Button>

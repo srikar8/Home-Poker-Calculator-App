@@ -45,6 +45,10 @@ export interface Database {
           co_host_id: string | null
           total_pot: number
           is_active: boolean
+          game_started: boolean
+          game_code: string | null
+          code_expires_at: string | null
+          max_players: number | null
           created_at: string
         }
         Insert: {
@@ -58,6 +62,10 @@ export interface Database {
           co_host_id?: string | null
           total_pot: number
           is_active: boolean
+          game_started?: boolean
+          game_code?: string | null
+          code_expires_at?: string | null
+          max_players?: number | null
           created_at?: string
         }
         Update: {
@@ -71,6 +79,10 @@ export interface Database {
           co_host_id?: string | null
           total_pot?: number
           is_active?: boolean
+          game_started?: boolean
+          game_code?: string | null
+          code_expires_at?: string | null
+          max_players?: number | null
           created_at?: string
         }
       }

@@ -199,7 +199,7 @@ export function GameSummary({ game, onBack, onSimplifyDebts, onUpdateGame }: Gam
                         {getInitials(player.name)}
                       </AvatarFallback>
                     </Avatar>
-                    {player.id === game.hostId && isProfit && (
+                    {player.id.split('_')[1] === game.hostId && isProfit && (
                       <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
                         <Trophy className="w-2 h-2 text-white" />
                       </div>

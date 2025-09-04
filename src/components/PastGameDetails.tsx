@@ -560,7 +560,7 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
                       {getInitials(player.name)}
                     </AvatarFallback>
                   </Avatar>
-                  {player.id === game.hostId && isProfit && (
+                  {player.id.split('_')[1] === game.hostId && isProfit && (
                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
                       <Trophy className="w-2 h-2 text-white" />
                     </div>
@@ -570,12 +570,12 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-medium">{player.name}</h3>
-                    {player.id === game.hostId && (
+                    {player.id.split('_')[1] === game.hostId && (
                       <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800/30">
                         Host
                       </Badge>
                     )}
-                    {player.id === game.coHostId && (
+                    {player.id.split('_')[1] === game.coHostId && (
                       <Badge variant="outline" className="text-xs bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800/30">
                         Co-host
                       </Badge>
