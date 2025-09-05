@@ -460,7 +460,7 @@ export default function App() {
               onViewPastGame={(game) => navigateToScreen('pastGameDetails', game)}
               onResumeGame={resumeGame}
               onViewStats={() => navigateToScreen('playerStats')}
-              onLogin={() => navigateToScreen('login')}
+              onLogin={handleLogin}
               onLogout={handleLogout}
             />
           )}

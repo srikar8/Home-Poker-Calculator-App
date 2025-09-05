@@ -561,7 +561,8 @@ export function NewGameSetup({ user, pastGames, onBack, onStartGame }: NewGameSe
           {players.length === 1 && (
             <div className="text-center py-4">
               <p className="text-sm text-muted-foreground">
-                Add at least one more player to start the game
+                Add at least one more player to start the game.
+                You need to login first to save.
               </p>
             </div>
           )}
