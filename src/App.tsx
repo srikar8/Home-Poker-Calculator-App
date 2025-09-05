@@ -9,10 +9,9 @@ import { GameSummary } from './components/GameSummary';
 import { SettlementScreen } from './components/SettlementScreen';
 import { PastGameDetails } from './components/PastGameDetails';
 import { PlayerStats } from './components/PlayerStats';
-import { LoginDemo } from './components/LoginDemo';
 import { createUser, getUser, saveGame, getGames, getCurrentGame, deleteGame } from './lib/database';
 
-export type Screen = 'home' | 'newGame' | 'gameInProgress' | 'cashOut' | 'summary' | 'settlement' | 'pastGameDetails' | 'playerStats' | 'login';
+export type Screen = 'home' | 'newGame' | 'gameInProgress' | 'cashOut' | 'summary' | 'settlement' | 'pastGameDetails' | 'playerStats';
 
 export interface User {
   id: string;
@@ -536,9 +535,6 @@ export default function App() {
             />
           )}
 
-          {currentScreen === 'login' && (
-            <LoginDemo onLogin={handleLogin} onBack={() => navigateToScreen('home')} />
-          )}
         </div>
         <Analytics />
       </div>
