@@ -362,18 +362,18 @@ export default function App() {
   const finishGame = async (game: Game) => {
     if (user) {
       try {
-        // Mark game as inactive and save to Supabase
+        // Mark game as inactive and save to Supabase using the same ID
         const finishedGame = { ...game, isActive: false };
         await saveGame(finishedGame, user.id);
         
-        // Update local state
+        // Update local state - add finished game to past games
         setPastGames(prev => [finishedGame, ...prev]);
         setCurrentGame(null);
       } catch (error) {
         console.error('Error finishing game:', error);
       }
     } else {
-      // Demo mode - save to localStorage
+      // Demo mode - save to localStorage using the same ID
       const finishedGame = { ...game, isActive: false };
       setPastGames(prev => [finishedGame, ...prev]);
       setCurrentGame(null);

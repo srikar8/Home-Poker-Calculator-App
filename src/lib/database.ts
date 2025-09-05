@@ -37,7 +37,7 @@ export const getUser = async (userId: string) => {
 export const saveGame = async (game: Game, userId: string) => {
   const formattedUserId = userId.startsWith('google_') ? userId : `google_${userId}`;
   
-  // First, save the main game record
+  // First, save the main game record with proper conflict resolution
   const { data: gameData, error: gameError } = await supabase
     .from('games')
     .upsert({
@@ -51,6 +51,8 @@ export const saveGame = async (game: Game, userId: string) => {
       co_host_id: game.coHostId || null,
       total_pot: game.totalPot,
       is_active: game.isActive
+    }, {
+      onConflict: 'id'
     })
     .select()
     .single()
