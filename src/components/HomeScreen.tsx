@@ -232,11 +232,9 @@ export function HomeScreen({ user, pastGames, currentGames, onStartNewGame, onVi
                           </h3>
                           <div className="flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300">
                             <div className="flex items-center gap-1">
-                              <Users className="w-4 h-4" />
                               <span>{game.players.length} players</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <DollarSign className="w-4 h-4" />
                               <span>${getCurrentPot(game)} pot</span>
                             </div>
                           </div>
