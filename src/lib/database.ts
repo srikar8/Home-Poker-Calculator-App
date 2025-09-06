@@ -125,7 +125,7 @@ export const saveGame = async (game: Game, userId: string) => {
 export const getGames = async (userId: string): Promise<Game[]> => {
   const formattedUserId = userId.startsWith('google_') ? userId : `google_${userId}`;
   
-  // Get games with all related data
+  // Get games with all related data - only inactive games (past games)
   const { data: games, error: gamesError } = await supabase
     .from('games')
     .select(`
@@ -135,6 +135,7 @@ export const getGames = async (userId: string): Promise<Game[]> => {
       settlement_transactions (*)
     `)
     .eq('user_id', formattedUserId)
+    .eq('is_active', false)
     .order('created_at', { ascending: false })
 
   if (gamesError) throw gamesError
@@ -185,7 +186,7 @@ export const getGames = async (userId: string): Promise<Game[]> => {
   }))
 }
 
-export const getCurrentGame = async (userId: string): Promise<Game | null> => {
+export const getCurrentGames = async (userId: string): Promise<Game[]> => {
   const formattedUserId = userId.startsWith('google_') ? userId : `google_${userId}`;
   
   const { data: games, error } = await supabase
@@ -198,21 +199,21 @@ export const getCurrentGame = async (userId: string): Promise<Game | null> => {
     `)
     .eq('user_id', formattedUserId)
     .eq('is_active', true)
-    .single()
+    .order('created_at', { ascending: false })
 
   if (error) {
-    if (error.code === 'PGRST116') {
-      // No active game found
-      return null
-    }
     throw error
   }
 
+  if (!games || games.length === 0) {
+    return []
+  }
+
   // Transform the data back to our Game interface
-  return {
-    id: games.id,
-    date: games.date,
-    players: games.players.map((player: any) => ({
+  return games.map((game: any) => ({
+    id: game.id,
+    date: game.date,
+    players: game.players.map((player: any) => ({
       id: player.id,
       name: player.name,
       avatar: player.avatar,
@@ -220,19 +221,19 @@ export const getCurrentGame = async (userId: string): Promise<Game | null> => {
       rebuys: player.rebuys,
       cashOut: player.cash_out
     })),
-    buyInAmount: games.buy_in_amount,
-    hostFee: games.host_fee,
-    defaultRebuyAmount: games.default_rebuy_amount,
-    hostId: games.host_id,
-    coHostId: games.co_host_id,
-    rebuyHistory: games.rebuy_history.map((rebuy: any) => ({
+    buyInAmount: game.buy_in_amount,
+    hostFee: game.host_fee,
+    defaultRebuyAmount: game.default_rebuy_amount,
+    hostId: game.host_id,
+    coHostId: game.co_host_id,
+    rebuyHistory: game.rebuy_history.map((rebuy: any) => ({
       id: rebuy.id,
       playerId: rebuy.player_id,
       playerName: rebuy.player_name,
       amount: rebuy.amount,
       timestamp: rebuy.timestamp
     })),
-    settlementTransactions: games.settlement_transactions.map((transaction: any) => ({
+    settlementTransactions: game.settlement_transactions.map((transaction: any) => ({
       from: {
         id: transaction.from_player_id,
         name: transaction.from_player_name,
@@ -249,9 +250,15 @@ export const getCurrentGame = async (userId: string): Promise<Game | null> => {
       },
       amount: transaction.amount
     })),
-    totalPot: games.total_pot,
-    isActive: games.is_active
-  }
+    totalPot: game.total_pot,
+    isActive: game.is_active
+  }))
+}
+
+// Keep the old function for backward compatibility, but it now returns the first active game
+export const getCurrentGame = async (userId: string): Promise<Game | null> => {
+  const activeGames = await getCurrentGames(userId);
+  return activeGames.length > 0 ? activeGames[0] : null;
 }
 
 export const deleteGame = async (gameId: string, userId: string) => {

@@ -1,27 +1,32 @@
 import React, { useState } from 'react';
 import { Card } from './ui/card';
-import { Plus, Play, Clock, DollarSign, Users, ChevronDown, ChevronRight, Spade, Calendar, Heart, Diamond, Club, Sparkles, BarChart3, LogIn, LogOut } from 'lucide-react';
+import { Plus, Play, Clock, DollarSign, Users, ChevronDown, ChevronRight, Spade, Calendar, Heart, Diamond, Club, Sparkles, BarChart3, LogIn, LogOut, Trash2 } from 'lucide-react';
 import { Game } from '../App';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
 import { Badge } from './ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
+import { Button } from './ui/button';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 
 interface HomeScreenProps {
   user: any;
   pastGames: Game[];
-  currentGame: Game | null;
+  currentGames: Game[];
   onStartNewGame: () => void;
   onViewPastGame: (game: Game) => void;
-  onResumeGame: () => void;
+  onResumeGame: (game?: Game) => void;
   onViewStats: () => void;
   onLogin: (user: any) => void;
   onLogout: () => void;
+  onDeleteActiveGame: (gameId: string) => void;
 }
 
-export function HomeScreen({ user, pastGames, currentGame, onStartNewGame, onViewPastGame, onResumeGame, onViewStats, onLogin, onLogout }: HomeScreenProps) {
+export function HomeScreen({ user, pastGames, currentGames, onStartNewGame, onViewPastGame, onResumeGame, onViewStats, onLogin, onLogout, onDeleteActiveGame }: HomeScreenProps) {
   const [isRecentGamesOpen, setIsRecentGamesOpen] = useState(false);
+  const [isResumeGamesOpen, setIsResumeGamesOpen] = useState(false);
   const [loginError, setLoginError] = useState('');
+  const [gameToDelete, setGameToDelete] = useState<string | null>(null);
 
   const handleGoogleSuccess = (credentialResponse: any) => {
     try {
@@ -56,9 +61,8 @@ export function HomeScreen({ user, pastGames, currentGame, onStartNewGame, onVie
     });
   };
 
-  const getCurrentPot = () => {
-    if (!currentGame) return 0;
-    return currentGame.players.reduce((sum, player) => sum + (player.buyIn + player.rebuys), 0);
+  const getCurrentPot = (game: Game) => {
+    return game.players.reduce((sum, player) => sum + (player.buyIn + player.rebuys), 0);
   };
 
 
@@ -138,22 +142,7 @@ export function HomeScreen({ user, pastGames, currentGame, onStartNewGame, onVie
                   size="large"
                   text="continue_with"
                   shape="rectangular"
-                  render={(renderProps) => (
-                    <button 
-                      onClick={renderProps.onClick} 
-                      disabled={renderProps.disabled}
-                      className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-600 group"
-                    >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                    <span className="text-gray-700 dark:text-gray-300 font-medium">Login with Google</span>
-                  </button>
-                )}
-              />
+                />
               </div>
             </div>
             {loginError && (
@@ -169,53 +158,109 @@ export function HomeScreen({ user, pastGames, currentGame, onStartNewGame, onVie
       {/* Main Action Cards */}
       <div className="px-6 space-y-4 mb-8">
 
-        {/* Resume Game Card - Only show if there's an active game */}
-        {currentGame && currentGame.isActive && (
-          <Card 
-            className="p-6 border-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/40 dark:via-indigo-950/40 dark:to-purple-950/40 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:scale-[1.03] hover:-translate-y-1 border-l-4 border-l-blue-500 hover:border-l-blue-400"
-            onClick={onResumeGame}
-            style={{
-              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 25%, #bfdbfe 50%, #93c5fd 75%, #3b82f6 100%)',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.03) translateY(-4px)';
-              e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 20px -5px rgba(0, 0, 0, 0.1)';
-              e.currentTarget.style.background = 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 25%, #93c5fd 50%, #3b82f6 75%, #2563eb 100%)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1) translateY(0)';
-              e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
-              e.currentTarget.style.background = 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 25%, #bfdbfe 50%, #93c5fd 75%, #3b82f6 100%)';
-            }}
-          >
-            <div className="flex items-center gap-4">
-              <div 
-                className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg"
+        {/* Resume Games Section - Show if there are active games */}
+        {currentGames.length > 0 && (
+          <Collapsible open={isResumeGamesOpen} onOpenChange={setIsResumeGamesOpen}>
+            <CollapsibleTrigger asChild>
+              <Card 
+                className="p-6 border-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/40 dark:via-indigo-950/40 dark:to-purple-950/40 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:scale-[1.03] hover:-translate-y-1 border-l-4 border-l-blue-500 hover:border-l-blue-400"
                 style={{
-                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%)',
-                  boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -2px rgba(59, 130, 246, 0.2)'
+                  background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 25%, #bfdbfe 50%, #93c5fd 75%, #3b82f6 100%)',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                  transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.03) translateY(-4px)';
+                  e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 10px 20px -5px rgba(0, 0, 0, 0.1)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 25%, #93c5fd 50%, #3b82f6 75%, #2563eb 100%)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 25%, #bfdbfe 50%, #93c5fd 75%, #3b82f6 100%)';
                 }}
               >
-                <Play className="w-6 h-6 text-white fill-white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-blue-900 dark:text-blue-100 mb-1 text-lg">Resume Game</h3>
-                <div className="flex items-center gap-4 text-sm text-blue-700 dark:text-blue-300">
-                  <div className="flex items-center gap-1">
-                    <Users className="w-4 h-4" />
-                    <span>{currentGame.players.length} players</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div 
+                      className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg"
+                      style={{
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%)',
+                        boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -2px rgba(59, 130, 246, 0.2)'
+                      }}
+                    >
+                      <Play className="w-6 h-6 text-white fill-white" style={{ filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))' }} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-blue-900 dark:text-blue-100 mb-1 text-lg">Active Games</h3>
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                        {currentGames.length} game{currentGames.length !== 1 ? 's' : ''} in progress
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <DollarSign className="w-4 h-4" />
-                    <span>${getCurrentPot()} pot</span>
-                  </div>
+                  {isResumeGamesOpen ? (
+                    <ChevronDown className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  )}
                 </div>
+              </Card>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent>
+              <div className="space-y-3 mt-3">
+                {currentGames.map((game, index) => (
+                  <Card 
+                    key={game.id} 
+                    className="p-6 border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] border-l-4 border-l-blue-500 cursor-pointer bg-gradient-to-r from-gray-50 to-slate-100 dark:from-gray-950/50 dark:to-slate-900/50"
+                    style={{ 
+                      animationDelay: isResumeGamesOpen ? `${index * 50}ms` : '0ms'
+                    }}
+                    onClick={() => onResumeGame(game)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div 
+                        className="flex items-center gap-4 flex-1 cursor-pointer"
+                        onClick={() => onResumeGame(game)}
+                      >
+                        <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-xl flex items-center justify-center shadow-md">
+                          <Play className="w-6 h-6 text-gray-700 dark:text-gray-200" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                            {formatDate(game.date)}
+                          </h3>
+                          <div className="flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300">
+                            <div className="flex items-center gap-1">
+                              <Users className="w-4 h-4" />
+                              <span>{game.players.length} players</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="w-4 h-4" />
+                              <span>${getCurrentPot(game)} pot</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse" style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setGameToDelete(game.id);
+                          }}
+                          className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors duration-200"
+                          title="Delete game"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
               </div>
-              <div className="w-3 h-3 bg-blue-400 rounded-full animate-pulse" style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}></div>
-            </div>
-          </Card>
+            </CollapsibleContent>
+          </Collapsible>
         )}
 
         {/* Start New Game Card */}
@@ -422,6 +467,42 @@ export function HomeScreen({ user, pastGames, currentGame, onStartNewGame, onVie
           </p>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!gameToDelete} onOpenChange={() => setGameToDelete(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+            </div>
+            <DialogTitle className="text-center">Delete Active Game?</DialogTitle>
+            <DialogDescription className="text-center">
+              This will permanently delete the game and all its data. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-3 sm:justify-center">
+            <Button
+              variant="outline"
+              onClick={() => setGameToDelete(null)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (gameToDelete) {
+                  onDeleteActiveGame(gameToDelete);
+                  setGameToDelete(null);
+                }
+              }}
+              className="flex-1"
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

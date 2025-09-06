@@ -9,7 +9,7 @@ import { GameSummary } from './components/GameSummary';
 import { SettlementScreen } from './components/SettlementScreen';
 import { PastGameDetails } from './components/PastGameDetails';
 import { PlayerStats } from './components/PlayerStats';
-import { createUser, getUser, saveGame, getGames, getCurrentGame, deleteGame } from './lib/database';
+import { createUser, getUser, saveGame, getGames, getCurrentGame, getCurrentGames, deleteGame } from './lib/database';
 
 export type Screen = 'home' | 'newGame' | 'gameInProgress' | 'cashOut' | 'summary' | 'settlement' | 'pastGameDetails' | 'playerStats';
 
@@ -81,8 +81,9 @@ export interface Game {
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [user, setUser] = useState<User | null>(null);
-  const [currentGame, setCurrentGame] = useState<Game | null>(null);
+  const [currentGames, setCurrentGames] = useState<Game[]>([]);
   const [pastGames, setPastGames] = useState<Game[]>([]);
+  const [selectedPastGame, setSelectedPastGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Load user and games from Supabase on app initialization
@@ -106,9 +107,9 @@ export default function App() {
           const games = await getGames(userData.id);
           setPastGames(games);
           
-          // Load current active game
-          const activeGame = await getCurrentGame(userData.id);
-          setCurrentGame(activeGame);
+          // Load current active games
+          const activeGames = await getCurrentGames(userData.id);
+          setCurrentGames(activeGames);
         } else {
           // No user logged in - check localStorage for saved games first
           const savedPastGames = localStorage.getItem('pastGames');
@@ -223,7 +224,7 @@ export default function App() {
           if (savedCurrentGame) {
             try {
               const currentGame = JSON.parse(savedCurrentGame);
-              setCurrentGame(currentGame);
+              setCurrentGames([currentGame]);
             } catch (error) {
               console.error('Error loading current game:', error);
             }
@@ -289,7 +290,9 @@ export default function App() {
 
   const navigateToScreen = (screen: Screen, game?: Game) => {
     setCurrentScreen(screen);
-    if (game) setCurrentGame(game);
+    if (game && screen === 'pastGameDetails') {
+      setSelectedPastGame(game);
+    }
     
     // Scroll to top when navigating to a new screen
     window.scrollTo(0, 0);
@@ -319,20 +322,23 @@ export default function App() {
     if (user) {
       try {
         await saveGame(newGame, user.id);
-        setCurrentGame(newGame);
+        setCurrentGames(prev => [newGame, ...prev]);
         navigateToScreen('gameInProgress');
       } catch (error) {
         console.error('Error creating new game:', error);
       }
     } else {
       // Demo mode - just set the game locally
-      setCurrentGame(newGame);
+      setCurrentGames([newGame]);
       navigateToScreen('gameInProgress');
     }
   };
 
   const updateGame = async (updatedGame: Game) => {
-    setCurrentGame(updatedGame);
+    setCurrentGames(prev => {
+      const updated = prev.map(game => game.id === updatedGame.id ? updatedGame : game);
+      return updated;
+    });
     
     if (user) {
       try {
@@ -346,14 +352,34 @@ export default function App() {
     }
   };
 
-  const saveGameToHome = () => {
-    // Keep the current game active but navigate to home
-    // The game will remain in localStorage and can be resumed
+  const saveGameToHome = async () => {
+    // Save the current game to database and navigate to home
+    if (currentGames[0] && user) {
+      try {
+        await saveGame(currentGames[0], user.id);
+        // Refresh current games from database to ensure we have the latest state
+        const activeGames = await getCurrentGames(user.id);
+        setCurrentGames(activeGames);
+      } catch (error) {
+        console.error('Error saving game when leaving:', error);
+      }
+    } else if (currentGames[0] && !user) {
+      // Demo mode - save to localStorage
+      localStorage.setItem('currentGame', JSON.stringify(currentGames[0]));
+    }
     navigateToScreen('home');
   };
 
-  const resumeGame = () => {
-    if (currentGame && currentGame.isActive) {
+  const resumeGame = (game?: Game) => {
+    const gameToResume = game || currentGames[0];
+    if (gameToResume && gameToResume.isActive) {
+      // Set the selected game as the first in currentGames for the GameInProgress component
+      if (game && game.id !== currentGames[0]?.id) {
+        setCurrentGames(prev => {
+          const filtered = prev.filter(g => g.id !== game.id);
+          return [game, ...filtered];
+        });
+      }
       navigateToScreen('gameInProgress');
     }
   };
@@ -365,9 +391,9 @@ export default function App() {
         const finishedGame = { ...game, isActive: false };
         await saveGame(finishedGame, user.id);
         
-        // Update local state - add finished game to past games
+        // Update local state - add finished game to past games and remove from current games
         setPastGames(prev => [finishedGame, ...prev]);
-        setCurrentGame(null);
+        setCurrentGames(prev => prev.filter(g => g.id !== game.id));
       } catch (error) {
         console.error('Error finishing game:', error);
       }
@@ -375,7 +401,7 @@ export default function App() {
       // Demo mode - save to localStorage using the same ID
       const finishedGame = { ...game, isActive: false };
       setPastGames(prev => [finishedGame, ...prev]);
-      setCurrentGame(null);
+      setCurrentGames(prev => prev.filter(g => g.id !== game.id));
       localStorage.removeItem('currentGame');
       
       // Save past games to localStorage
@@ -400,6 +426,21 @@ export default function App() {
     }
   };
 
+  const removeActiveGame = async (gameId: string) => {
+    if (user) {
+      try {
+        await deleteGame(gameId, user.id);
+        setCurrentGames(prev => prev.filter(game => game.id !== gameId));
+      } catch (error) {
+        console.error('Error deleting active game:', error);
+      }
+    } else {
+      // Demo mode - remove from localStorage
+      setCurrentGames(prev => prev.filter(game => game.id !== gameId));
+      localStorage.removeItem('currentGame');
+    }
+  };
+
   const handleLogin = async (userData: User) => {
     setUser(userData);
     // Save user to localStorage
@@ -413,9 +454,9 @@ export default function App() {
       const games = await getGames(userData.id);
       setPastGames(games);
       
-      // Load current active game
-      const activeGame = await getCurrentGame(userData.id);
-      setCurrentGame(activeGame);
+      // Load current active games
+      const activeGames = await getCurrentGames(userData.id);
+      setCurrentGames(activeGames);
     } catch (error) {
       console.error('Error loading user data:', error);
     }
@@ -426,7 +467,7 @@ export default function App() {
 
   const handleLogout = () => {
     setUser(null);
-    setCurrentGame(null);
+    setCurrentGames([]);
     setPastGames([]);
     // Remove user from localStorage
     localStorage.removeItem('user');
@@ -454,13 +495,14 @@ export default function App() {
             <HomeScreen
               user={user}
               pastGames={pastGames}
-              currentGame={currentGame}
+              currentGames={currentGames}
               onStartNewGame={() => navigateToScreen('newGame')}
               onViewPastGame={(game) => navigateToScreen('pastGameDetails', game)}
               onResumeGame={resumeGame}
               onViewStats={() => navigateToScreen('playerStats')}
               onLogin={handleLogin}
               onLogout={handleLogout}
+              onDeleteActiveGame={removeActiveGame}
             />
           )}
           
@@ -473,9 +515,9 @@ export default function App() {
             />
           )}
           
-          {currentScreen === 'gameInProgress' && currentGame && (
+          {currentScreen === 'gameInProgress' && currentGames[0] && (
             <GameInProgress
-              game={currentGame}
+              game={currentGames[0]}
               onBack={() => navigateToScreen('home')}
               onUpdateGame={updateGame}
               onEndGame={() => navigateToScreen('cashOut')}
@@ -483,27 +525,27 @@ export default function App() {
             />
           )}
           
-          {currentScreen === 'cashOut' && currentGame && (
+          {currentScreen === 'cashOut' && currentGames[0] && (
             <CashOutScreen
-              game={currentGame}
+              game={currentGames[0]}
               onBack={() => navigateToScreen('gameInProgress')}
               onUpdateGame={updateGame}
               onViewSummary={() => navigateToScreen('summary')}
             />
           )}
           
-          {currentScreen === 'summary' && currentGame && (
+          {currentScreen === 'summary' && currentGames[0] && (
             <GameSummary
-              game={currentGame}
+              game={currentGames[0]}
               onBack={() => navigateToScreen('cashOut')}
               onSimplifyDebts={() => navigateToScreen('settlement')}
               onUpdateGame={updateGame}
             />
           )}
           
-          {currentScreen === 'settlement' && currentGame && (
+          {currentScreen === 'settlement' && currentGames[0] && (
             <SettlementScreen
-              game={currentGame}
+              game={currentGames[0]}
               onBack={() => navigateToScreen('summary')}
               onFinishGame={(gameWithSettlements) => {
                 finishGame(gameWithSettlements);
@@ -513,16 +555,16 @@ export default function App() {
             />
           )}
           
-          {currentScreen === 'pastGameDetails' && currentGame && (
+          {currentScreen === 'pastGameDetails' && selectedPastGame && (
             <PastGameDetails
-              game={currentGame}
+              game={selectedPastGame}
               onBack={() => {
-                setCurrentGame(null);
+                setSelectedPastGame(null);
                 navigateToScreen('home');
               }}
               onDeleteGame={(gameId) => {
                 removePastGame(gameId);
-                setCurrentGame(null);
+                setSelectedPastGame(null);
                 navigateToScreen('home');
               }}
             />
