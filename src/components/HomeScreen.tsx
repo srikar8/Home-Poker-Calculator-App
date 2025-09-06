@@ -161,7 +161,7 @@ export function HomeScreen({ user, pastGames, currentGame, onStartNewGame, onVie
                 <p className="text-sm text-red-600 dark:text-red-400 text-center">{loginError}</p>
               </div>
             )}
-            <p className="text-sm text-center">Login to save your games</p>
+            <p className="text-sm">Login to save your games</p>
           </div>
         )}
       </div>
