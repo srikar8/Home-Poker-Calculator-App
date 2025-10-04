@@ -91,9 +91,10 @@ export function PlayerStats({ pastGames, onBack }: PlayerStatsProps) {
         <div className="flex items-center gap-4 mb-6">
           <button
             onClick={onBack}
-            className="w-10 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-border/50"
+            className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-border/50 shrink-0 min-w-[7rem] min-h-[7rem] w-[7rem] h-[7rem]"
+            style={{ padding: 0 }}
           >
-            <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            <ArrowLeft className="w-9 h-9 text-gray-700 dark:text-gray-300 pointer-events-none" />
           </button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Player Statistics</h1>

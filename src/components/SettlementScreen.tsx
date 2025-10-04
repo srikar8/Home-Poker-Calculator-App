@@ -567,14 +567,13 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
       {/* Header - Fixed to screen top */}
       <div className="fixed top-0 left-0 right-0 p-4 bg-background border-b border-border/50 z-10" id="header">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={onBack}
-            className="p-2 rounded-full"
+            className="rounded-full flex items-center justify-center shrink-0 hover:bg-accent transition-colors min-w-[7rem] min-h-[7rem] w-[7rem] h-[7rem]"
+            style={{ padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
           >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+            <ArrowLeft className="w-9 h-9 pointer-events-none" />
+          </button>
           <div className="flex-1">
             <h1 className="text-lg font-medium">Settlement</h1>
             <p className="text-sm text-muted-foreground">
@@ -585,14 +584,13 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
             </p>
           </div>
 
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={shareResults}
-            className="p-2 rounded-full"
+            className="rounded-full flex items-center justify-center shrink-0 hover:bg-accent transition-colors min-w-[7rem] min-h-[7rem] w-[7rem] h-[7rem]"
+            style={{ padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
           >
-            <Share className="w-5 h-5" />
-          </Button>
+            <Share className="w-9 h-9 pointer-events-none" />
+          </button>
         </div>
       </div>
 
@@ -783,7 +781,7 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleWhatsAppShare(summary)}
+                      onClick={() => shareToWhatsApp(summary)}
                       className="h-8 px-3"
                     >
                       <Share className="w-3 h-3 mr-1" />
@@ -941,9 +939,9 @@ export function SettlementScreen({ game, onBack, onFinishGame, onUpdateGame }: S
             };
             onFinishGame(gameWithSettlements);
           }}
-          className="w-full h-12 text-base rounded-xl bg-green-600 hover:bg-green-700"
+          className="w-full text-2xl rounded-xl bg-green-600 hover:bg-green-700 min-h-[7rem] py-5"
         >
-          <CheckCircle className="w-5 h-5 mr-2" />
+          <CheckCircle className="w-6 h-6 mr-2" />
           Finish Game
         </Button>
       </div>

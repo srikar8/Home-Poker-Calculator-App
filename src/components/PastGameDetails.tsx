@@ -382,14 +382,13 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
       {/* Header */}
       <div className="p-4 bg-background border-b border-border/50">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={onBack}
-            className="p-2 rounded-full"
+            className="rounded-full flex items-center justify-center shrink-0 hover:bg-accent transition-colors min-w-[7rem] min-h-[7rem] w-[7rem] h-[7rem]"
+            style={{ padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
           >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+            <ArrowLeft className="w-9 h-9 pointer-events-none" />
+          </button>
           <div className="flex-1">
             <h1 className="text-lg font-medium">Game Details</h1>
             <p className="text-sm text-muted-foreground">
@@ -401,22 +400,20 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
               </p>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={shareResults}
-            className="p-2 rounded-full"
+            className="rounded-full flex items-center justify-center shrink-0 hover:bg-accent transition-colors min-w-[7rem] min-h-[7rem] w-[7rem] h-[7rem]"
+            style={{ padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
           >
-            <Share className="w-5 h-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
+            <Share className="w-9 h-9 pointer-events-none" />
+          </button>
+          <button
             onClick={downloadResults}
-            className="p-2 rounded-full"
+            className="rounded-full flex items-center justify-center shrink-0 hover:bg-accent transition-colors min-w-[7rem] min-h-[7rem] w-[7rem] h-[7rem]"
+            style={{ padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
           >
-            <Download className="w-5 h-5" />
-          </Button>
+            <Download className="w-9 h-9 pointer-events-none" />
+          </button>
           
           {/* Only show delete button for non-demo games */}
           {!isDemoGame(game) && (

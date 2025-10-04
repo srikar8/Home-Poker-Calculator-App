@@ -261,14 +261,13 @@ export function NewGameSetup({ user, pastGames, onBack, onStartGame }: NewGameSe
       {/* Header - Fixed to screen top */}
       <div className="fixed top-0 left-0 right-0 p-4 bg-background border-b border-border/50 z-10" id="header">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={onBack}
-            className="p-2 rounded-full"
+            className="rounded-full flex items-center justify-center shrink-0 hover:bg-accent transition-colors min-w-[7rem] min-h-[7rem] w-[7rem] h-[7rem]"
+            style={{ padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
           >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+            <ArrowLeft className="w-9 h-9 pointer-events-none" />
+          </button>
           <div>
             <h1 className="text-lg font-medium">New Game Setup</h1>
             <p className="text-sm text-muted-foreground">Configure game settings</p>
@@ -574,7 +573,7 @@ export function NewGameSetup({ user, pastGames, onBack, onStartGame }: NewGameSe
         <Button
           onClick={() => onStartGame(players, parseFloat(buyInAmount), parseFloat(hostFee), parseFloat(defaultRebuyAmount), selectedHostId, selectedCoHostId)}
           disabled={!canStartGame}
-          className="w-full h-12 text-base rounded-xl"
+          className="w-full text-2xl rounded-xl min-h-[7rem] py-5"
         >
           Start Game
           {players.length > 0 && (
