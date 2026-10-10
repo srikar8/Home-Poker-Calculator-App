@@ -91,3 +91,11 @@ jspm_packages/
 # Temporary folders
 tmp/
 temp/
+
+# Native iOS / Xcode app (local only)
+Home-Poker-Calculator-App/
+.vercel
+.env*
+
+# Supabase CLI local link cache
+supabase/.temp/

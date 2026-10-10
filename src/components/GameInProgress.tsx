@@ -250,14 +250,14 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
   return (
     <div className="h-screen flex flex-col">
       {/* Header - Fixed to screen top */}
-      <div className="fixed top-0 left-0 right-0 p-4 bg-background border-b border-border/50 z-10" id="header">
-        <div className="flex items-center gap-4">
+      <div className="app-top-bar" id="header">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setIsLeaveConfirmationOpen(true)}
-            className="rounded-full flex items-center justify-center shrink-0 hover:bg-accent transition-colors min-w-[7rem] min-h-[7rem] w-[7rem] h-[7rem]"
-            style={{ padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
+            className="btn-back"
+            aria-label="Go back"
           >
-            <ArrowLeft className="w-9 h-9 pointer-events-none" />
+            <ArrowLeft />
           </button>
           <div className="flex-1">
             <h1 className="text-lg font-medium">Game in Progress</h1>
@@ -610,10 +610,10 @@ export function GameInProgress({ game, onBack, onUpdateGame, onEndGame, onSaveAn
       </div>
 
       {/* Bottom Action - Fixed to screen bottom */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 border-t border-border/50 bg-background z-10" id="bottom-button">
+      <div className="app-bottom-bar" id="bottom-button">
         <Button
           onClick={onEndGame}
-          className="w-full text-2xl rounded-xl bg-green-600 hover:bg-green-700 min-h-[7rem] py-5"
+          className="btn-cta bg-green-600 hover:bg-green-700"
         >
           End Game & Cash Out
         </Button>

@@ -384,10 +384,10 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
         <div className="flex items-center gap-4">
           <button
             onClick={onBack}
-            className="rounded-full flex items-center justify-center shrink-0 hover:bg-accent transition-colors min-w-[7rem] min-h-[7rem] w-[7rem] h-[7rem]"
-            style={{ padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
+            className="btn-back"
+            aria-label="Go back"
           >
-            <ArrowLeft className="w-9 h-9 pointer-events-none" />
+            <ArrowLeft />
           </button>
           <div className="flex-1">
             <h1 className="text-lg font-medium">Game Details</h1>
@@ -402,17 +402,17 @@ export function PastGameDetails({ game, onBack, onDeleteGame }: PastGameDetailsP
           </div>
           <button
             onClick={shareResults}
-            className="rounded-full flex items-center justify-center shrink-0 hover:bg-accent transition-colors min-w-[7rem] min-h-[7rem] w-[7rem] h-[7rem]"
-            style={{ padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
+            className="btn-icon"
+            aria-label="Share results"
           >
-            <Share className="w-9 h-9 pointer-events-none" />
+            <Share />
           </button>
           <button
             onClick={downloadResults}
-            className="rounded-full flex items-center justify-center shrink-0 hover:bg-accent transition-colors min-w-[7rem] min-h-[7rem] w-[7rem] h-[7rem]"
-            style={{ padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
+            className="btn-icon"
+            aria-label="Download results"
           >
-            <Download className="w-9 h-9 pointer-events-none" />
+            <Download />
           </button>
           
           {/* Only show delete button for non-demo games */}

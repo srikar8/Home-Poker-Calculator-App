@@ -1,13 +1,14 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
-}
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Avoid crashing the whole app when env vars are missing — fall back to local mode.
+export const supabase: SupabaseClient = isSupabaseConfigured
+  ? createClient(supabaseUrl!, supabaseAnonKey!)
+  : (null as unknown as SupabaseClient)
 
 // Database types
 export interface Database {
@@ -45,6 +46,7 @@ export interface Database {
           co_host_id: string | null
           total_pot: number
           is_active: boolean
+          extra_data?: Record<string, unknown> | null
           created_at: string
         }
         Insert: {
@@ -58,6 +60,7 @@ export interface Database {
           co_host_id?: string | null
           total_pot: number
           is_active: boolean
+          extra_data?: Record<string, unknown> | null
           created_at?: string
         }
         Update: {
@@ -71,6 +74,7 @@ export interface Database {
           co_host_id?: string | null
           total_pot?: number
           is_active?: boolean
+          extra_data?: Record<string, unknown> | null
           created_at?: string
         }
       }

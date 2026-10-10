@@ -20,35 +20,27 @@ interface CashOutScreenProps {
   onViewSummary: () => void;
 }
 
+function buildCashOutValues(players: Player[]): { [playerId: string]: string } {
+  const initialValues: { [playerId: string]: string } = {};
+  players.forEach((player) => {
+    initialValues[player.id] = (player.cashOut ?? 0).toString();
+  });
+  return initialValues;
+}
+
 export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: CashOutScreenProps) {
-  const [cashOutValues, setCashOutValues] = useState<{ [playerId: string]: string }>({});
+  // Initialize from game immediately to avoid a $0 flash when navigating back
+  const [cashOutValues, setCashOutValues] = useState<{ [playerId: string]: string }>(() =>
+    buildCashOutValues(game.players)
+  );
   const [isCashOutDialogOpen, setIsCashOutDialogOpen] = useState(false);
   const [isConfirmationDialogOpen, setIsConfirmationDialogOpen] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [tempCashOutValue, setTempCashOutValue] = useState('');
 
-  // Initialize cash out values with 0 for all players
+  // Keep local inputs in sync when the game object changes (refresh / player edits)
   React.useEffect(() => {
-    if (game.players.length > 0) {
-      const initialValues: { [playerId: string]: string } = {};
-      
-      // Check if players already have cashOut values from the game object
-      const hasExistingCashOut = game.players.some(player => player.cashOut > 0);
-      
-      if (hasExistingCashOut) {
-        // Use existing cashOut values from the game
-        game.players.forEach(player => {
-          initialValues[player.id] = player.cashOut.toString();
-        });
-      } else {
-        // Set default values: all players start with 0
-        game.players.forEach((player) => {
-          initialValues[player.id] = '0';
-        });
-      }
-      
-      setCashOutValues(initialValues);
-    }
+    setCashOutValues(buildCashOutValues(game.players));
   }, [game.players]);
 
   const getInitials = (name: string) => {
@@ -173,14 +165,14 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
   return (
     <div className="h-screen flex flex-col">
       {/* Header - Fixed to screen top */}
-      <div className="fixed top-0 left-0 right-0 p-4 bg-background border-b border-border/50 z-10" id="header">
-        <div className="flex items-center gap-4">
+      <div className="app-top-bar" id="header">
+        <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="rounded-full flex items-center justify-center shrink-0 hover:bg-accent transition-colors min-w-[7rem] min-h-[7rem] w-[7rem] h-[7rem]"
-            style={{ padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
+            className="btn-back"
+            aria-label="Go back"
           >
-            <ArrowLeft className="w-9 h-9 pointer-events-none" />
+            <ArrowLeft />
           </button>
           <div className="flex-1">
             <h1 className="text-lg font-medium">Cash Out</h1>
@@ -301,11 +293,11 @@ export function CashOutScreen({ game, onBack, onUpdateGame, onViewSummary }: Cas
       </div>
 
       {/* Bottom Action - Fixed to screen bottom */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 border-t border-border/50 bg-background z-10" id="bottom-button">
+      <div className="app-bottom-bar" id="bottom-button">
         <Button
           onClick={showConfirmationDialog}
           disabled={!canViewSummary()}
-          className="w-full text-2xl rounded-xl min-h-[7rem] py-5"
+          className="btn-cta"
         >
           {canViewSummary() ? 'View Summary' : 'Balance the amounts first'}
         </Button>

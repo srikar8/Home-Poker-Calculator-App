@@ -4854,3 +4854,76 @@ html {
   font-weight: 600;
   margin: 0;
 }
+
+/* Comfortable mobile touch targets (arbitrary Tailwind classes are not in this CSS build) */
+.app-top-bar,
+.app-bottom-bar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 24rem;
+  z-index: 10;
+  background: var(--background);
+  box-sizing: border-box;
+}
+
+.app-top-bar {
+  top: 0;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--border) 50%, transparent);
+}
+
+.app-bottom-bar {
+  bottom: 0;
+  padding: 0.875rem 1rem calc(0.875rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid color-mix(in oklab, var(--border) 50%, transparent);
+}
+
+.btn-back,
+.btn-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  color: inherit;
+  transition: background-color 0.15s ease;
+}
+
+.btn-back:hover,
+.btn-icon:hover {
+  background: var(--accent);
+}
+
+.btn-back svg,
+.btn-icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  pointer-events: none;
+}
+
+.btn-cta {
+  width: 100% !important;
+  height: 3.25rem !important;
+  min-height: 3.25rem !important;
+  max-height: 3.25rem !important;
+  padding: 0 1.25rem !important;
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  border-radius: 0.75rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  white-space: nowrap;
+}

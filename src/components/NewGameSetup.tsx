@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from './ui/select';
 import { Game, User } from '../App';
+import { loadNewGameDraft, saveNewGameDraft } from '../lib/persistence';
 
 interface NewGameSetupProps {
   user: User | null;
@@ -92,21 +93,45 @@ const getMostRecentGameSettings = (pastGames: Game[]): { buyInAmount: number; ho
 };
 
 export function NewGameSetup({ user, pastGames, onBack, onStartGame }: NewGameSetupProps) {
-  const [players, setPlayers] = useState<{ id: string; name: string; avatar?: string }[]>([]);
+  const savedDraft = loadNewGameDraft();
+
+  const [players, setPlayers] = useState<{ id: string; name: string; avatar?: string }[]>(
+    savedDraft?.players || []
+  );
   const [newPlayerName, setNewPlayerName] = useState('');
-  const [buyInAmount, setBuyInAmount] = useState('50');
-  const [hostFee, setHostFee] = useState('5');
-  const [defaultRebuyAmount, setDefaultRebuyAmount] = useState('50');
-  const [selectedHostId, setSelectedHostId] = useState<string>('');
-  const [selectedCoHostId, setSelectedCoHostId] = useState<string | undefined>(undefined);
+  const [buyInAmount, setBuyInAmount] = useState(savedDraft?.buyInAmount || '50');
+  const [hostFee, setHostFee] = useState(savedDraft?.hostFee || '5');
+  const [defaultRebuyAmount, setDefaultRebuyAmount] = useState(
+    savedDraft?.defaultRebuyAmount || '50'
+  );
+  const [selectedHostId, setSelectedHostId] = useState<string>(
+    savedDraft?.selectedHostId || ''
+  );
+  const [selectedCoHostId, setSelectedCoHostId] = useState<string | undefined>(
+    savedDraft?.selectedCoHostId
+  );
   const [isAddPlayerDialogOpen, setIsAddPlayerDialogOpen] = useState(false);
   const [isGameStakesDialogOpen, setIsGameStakesDialogOpen] = useState(false);
   const [selectedPastPlayerId, setSelectedPastPlayerId] = useState<string>('');
 
-  const [autoPopulated, setAutoPopulated] = useState(false);
+  const [autoPopulated, setAutoPopulated] = useState(Boolean(savedDraft));
+  const [draftReady, setDraftReady] = useState(Boolean(savedDraft));
 
-  // Auto-populate players and game settings from past games on component mount
+  // Restore draft, or auto-populate from past games when no draft exists
   useEffect(() => {
+    const draft = loadNewGameDraft();
+    if (draft) {
+      setPlayers(draft.players);
+      setBuyInAmount(draft.buyInAmount);
+      setHostFee(draft.hostFee);
+      setDefaultRebuyAmount(draft.defaultRebuyAmount);
+      setSelectedHostId(draft.selectedHostId);
+      setSelectedCoHostId(draft.selectedCoHostId);
+      setAutoPopulated(true);
+      setDraftReady(true);
+      return;
+    }
+
     const pastPlayers = getUniquePlayersFromPastGames(pastGames);
     const recentSettings = getMostRecentGameSettings(pastGames);
     
@@ -148,7 +173,31 @@ export function NewGameSetup({ user, pastGames, onBack, onStartGame }: NewGameSe
       setHostFee(recentSettings.hostFee.toString());
       setDefaultRebuyAmount(recentSettings.defaultRebuyAmount.toString());
     }
+
+    setDraftReady(true);
   }, [user, pastGames]);
+
+  // Persist setup draft so refresh keeps stakes/players
+  useEffect(() => {
+    if (!draftReady) return;
+
+    saveNewGameDraft({
+      players,
+      buyInAmount,
+      hostFee,
+      defaultRebuyAmount,
+      selectedHostId,
+      selectedCoHostId,
+    });
+  }, [
+    draftReady,
+    players,
+    buyInAmount,
+    hostFee,
+    defaultRebuyAmount,
+    selectedHostId,
+    selectedCoHostId,
+  ]);
 
   const addPlayer = () => {
     let playerToAdd: { id: string; name: string; avatar?: string } | null = null;
@@ -259,14 +308,14 @@ export function NewGameSetup({ user, pastGames, onBack, onStartGame }: NewGameSe
   return (
     <div className="h-screen flex flex-col">
       {/* Header - Fixed to screen top */}
-      <div className="fixed top-0 left-0 right-0 p-4 bg-background border-b border-border/50 z-10" id="header">
-        <div className="flex items-center gap-4">
+      <div className="app-top-bar" id="header">
+        <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="rounded-full flex items-center justify-center shrink-0 hover:bg-accent transition-colors min-w-[7rem] min-h-[7rem] w-[7rem] h-[7rem]"
-            style={{ padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }}
+            className="btn-back"
+            aria-label="Go back"
           >
-            <ArrowLeft className="w-9 h-9 pointer-events-none" />
+            <ArrowLeft />
           </button>
           <div>
             <h1 className="text-lg font-medium">New Game Setup</h1>
@@ -569,16 +618,16 @@ export function NewGameSetup({ user, pastGames, onBack, onStartGame }: NewGameSe
       </div>
 
       {/* Bottom Action - Fixed to screen bottom */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 border-t border-border/50 bg-background z-10" id="bottom-button">
+      <div className="app-bottom-bar" id="bottom-button">
         <Button
           onClick={() => onStartGame(players, parseFloat(buyInAmount), parseFloat(hostFee), parseFloat(defaultRebuyAmount), selectedHostId, selectedCoHostId)}
           disabled={!canStartGame}
-          className="w-full text-2xl rounded-xl min-h-[7rem] py-5"
+          className="btn-cta"
         >
           Start Game
           {players.length > 0 && (
-            <span className="ml-2 text-sm opacity-75">
-              ({players.length} players • ${getTotalPlayerCost()} each)
+            <span className="text-sm opacity-75 font-normal">
+              ({players.length} • ${getTotalPlayerCost()})
             </span>
           )}
         </Button>
