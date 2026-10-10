@@ -460,7 +460,7 @@ export function HomeScreen({ user, pastGames, currentGames, onStartNewGame, onVi
         <div className="text-center">
           <p className="text-xs text-muted-foreground/60 font-medium flex items-center justify-center gap-1">
             <Sparkles className="w-3 h-3" />
-            Created by Srikar | 2025
+            Created by Srikar | 2026
             <Sparkles className="w-3 h-3" />
           </p>
         </div>
